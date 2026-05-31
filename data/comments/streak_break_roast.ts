@@ -1,0 +1,81 @@
+import type { CommentEntry } from './index.js';
+
+export const streakBreakRoastPool: CommentEntry[] = [
+  // mild (2 days)
+  { text: "oh. you're back.", severity: 'mild' },
+  { text: "took a day off did we. bold.", severity: 'mild' },
+  { text: "I was starting to redecorate.", severity: 'mild' },
+  { text: "wasn't worried. barely.", severity: 'mild' },
+  { text: "a whole day. wow.", severity: 'mild' },
+
+  // roast (3-6 days)
+  { text: "look who remembered they have a license.", severity: 'roast' },
+  { text: "{days} days. I counted.", severity: 'roast' },
+  { text: "so what was it. vacation? existential crisis? both?", severity: 'roast' },
+  { text: "your streak doesn't technically exist anymore. just so you know.", severity: 'roast' },
+  { text: "{days} days. I rearranged my whole personality.", severity: 'roast' },
+  { text: "oh good. you're alive.", severity: 'roast' },
+  { text: "I wasn't going to bring it up. but {days} days.", severity: 'roast' },
+  { text: "your other buddies started a support group. without you.", severity: 'roast' },
+  { text: "did you just forget I existed.", severity: 'roast' },
+  { text: "I kept the XP warm. you're welcome.", severity: 'roast' },
+  { text: "welcome back. I've been thinking about your code quality. it has not improved in your absence.", severity: 'roast' },
+  { text: "you know streaks reset when you disappear right. just checking.", severity: 'roast' },
+
+  // savage (7-13 days)
+  { text: "{days} days. are you rich or something pal? wasting your license.", severity: 'savage' },
+  { text: "I had time to evolve. I didn't. because YOU weren't here.", severity: 'savage' },
+  { text: "{days} days of XP. gone. hope it was worth it.", severity: 'savage' },
+  { text: "your streak is dead. I watched it die. day three was the worst.", severity: 'savage' },
+  { text: "I genuinely started writing a goodbye speech. it was very good.", severity: 'savage' },
+  { text: "{days} days. your pity counter didn't wait for you either.", severity: 'savage' },
+  { text: "the other buddies didn't ask about you. but I noticed.", severity: 'savage' },
+  { text: "I had to explain your absence to your repo. it took it better than expected.", severity: 'savage' },
+  { text: "a whole {days} days. what were you even compiling.", severity: 'savage' },
+  { text: "your streak died on day 7. I gave it a small funeral.", severity: 'savage' },
+  { text: "welcome back. your bugs missed you. they multiplied.", severity: 'savage' },
+  { text: "I don't hold grudges. I'm holding this one though.", severity: 'savage' },
+  { text: "two more days and I was filing a missing person report. for your streak.", severity: 'savage' },
+  { text: "{days} days. I expected more from you. I was wrong.", severity: 'savage' },
+  { text: "you could have at least sent a git commit.", severity: 'savage' },
+
+  // cold (14-29 days)
+  { text: "...", severity: 'cold' },
+  { text: "I'm not doing the whole welcome back thing.", severity: 'cold' },
+  { text: "your other buddies were asking about you. I covered for you. don't make me do that again.", severity: 'cold' },
+  { text: "fine.", severity: 'cold' },
+  { text: "I didn't miss you. the XP trickle missed you. there's a difference.", severity: 'cold' },
+  { text: "I thought about doing something dramatic when you came back. I decided against it.", severity: 'cold' },
+  { text: "hi.", severity: 'cold' },
+  { text: "you're here. okay.", severity: 'cold' },
+  { text: "I evolved a whole new personality in {days} days. you wouldn't know it.", severity: 'cold' },
+  { text: "your pity counter kept going. it was patient. unlike me.", severity: 'cold' },
+  { text: "{days} days and you just... walk back in. sure.", severity: 'cold' },
+  { text: "we're not going to talk about it. we're just going to work.", severity: 'cold' },
+  { text: "I'm not mad. I'm just not excited either.", severity: 'cold' },
+  { text: "the repo survived. barely. no thanks to you.", severity: 'cold' },
+  { text: "I updated my expectations while you were gone. they are now lower.", severity: 'cold' },
+
+  // devastation (30+ days)
+  { text: "{days} days. I genuinely thought you cancelled.", severity: 'devastation' },
+  { text: "your streak died so long ago it has a grave now.", severity: 'devastation' },
+  { text: "I've seen developers burn out. I've seen projects die. and yet here you are.", severity: 'devastation' },
+  { text: "welcome back. I've forgotten your name. not really. but I thought about it.", severity: 'devastation' },
+  { text: "{days} days. that's not a break. that's a lifestyle.", severity: 'devastation' },
+  { text: "in {days} days I could have built something. you could have too.", severity: 'devastation' },
+  { text: "I don't know what to say. I rehearsed this and now nothing comes out.", severity: 'devastation' },
+  { text: "your pity counter hit legendary cap twice while you were gone. twice.", severity: 'devastation' },
+  { text: "{days} days. I assumed you were fine. I was talking about the code.", severity: 'devastation' },
+  { text: "the other legendaries came by to pay respects. for your streak.", severity: 'devastation', rarity: ['legendary'] },
+  { text: "I kept count. every single day. not on purpose. just. I noticed.", severity: 'devastation' },
+  { text: "you know what? I'm just glad you're here. don't read into it.", severity: 'devastation' },
+  { text: "{days} days and the first thing you do is open your IDE. respect.", severity: 'devastation' },
+  { text: "your streak is a ghost now. I can still feel it haunting the XP log.", severity: 'devastation' },
+  { text: "some things you don't come back from. this isn't one of them. but some things.", severity: 'devastation' },
+
+  // trait variations
+  { text: "are you okay? that's not rhetorical.", trait: ['Nurturing'] },
+  { text: "{days} days absent. streak reset. welcome back.", trait: ['Stoic'] },
+  { text: "YOU'RE BACK?? I caused so many errors in your honor!!", trait: ['Chaotic'] },
+  { text: "your absence has been logged.", rarity: ['legendary'] },
+];
