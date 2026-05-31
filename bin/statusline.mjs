@@ -2,11 +2,12 @@
 // Pocket Pet statusline — renders the creature and drives the wall-clock heartbeat.
 // Claude Code runs this on every refresh (see statusLine.refreshInterval in settings).
 // stdin: Claude Code session JSON. stdout: the creature's status line(s).
-import { loadState, saveState } from '../dist/src/persistence.js';
-import { applyEvent } from '../dist/src/engine/events.js';
-import { render } from '../dist/src/render.js';
 
 const COMMENT_DISPLAY_WINDOW_SEC = 90;
+
+function secsBetween(a, b) {
+  return (new Date(b).getTime() - new Date(a).getTime()) / 1000;
+}
 
 async function readStdin() {
   if (process.stdin.isTTY) return '';
@@ -15,23 +16,21 @@ async function readStdin() {
   return data;
 }
 
-function secsBetween(a, b) {
-  return (new Date(b).getTime() - new Date(a).getTime()) / 1000;
-}
-
 async function main() {
-  let input = {};
-  try {
-    input = JSON.parse((await readStdin()) || '{}');
-  } catch {
-    input = {};
-  }
+  const { loadState, saveState } = await import('../dist/src/persistence.js');
+  const { applyEvent } = await import('../dist/src/engine/events.js');
+  const { render } = await import('../dist/src/render.js');
+
+  await readStdin(); // consume but ignore stdin
 
   const now = new Date().toISOString();
   let state = loadState();
 
-  // Heartbeat tick: elapsed wall-clock time since last render drives passive XP,
-  // shards, tame-hours, mood and (occasionally) a passive comment.
+  if (!state.activeBuddy || state.roster.length === 0) {
+    process.stdout.write('🐾 No buddy — run: npm run pocket-pet -- choose');
+    return;
+  }
+
   const lastTick = state.session.lastTickAt ?? state.session.sessionStart ?? now;
   const elapsedSec = Math.max(0, Math.min(secsBetween(lastTick, now), 3600));
 
@@ -41,20 +40,12 @@ async function main() {
     saveState(state);
   }
 
-  // No buddy chosen yet — prompt the user without crashing.
-  if (!state.activeBuddy || state.roster.length === 0) {
-    process.stdout.write('🐾 No buddy — run: /pocket-pet choose');
-    return;
-  }
-
-  // Base status line.
   let line = render(state);
 
-  // Append the creature's current comment if it's still within its display window.
   const c = state.session.lastComment;
   const cAt = state.session.lastCommentAt;
   if (c && cAt && secsBetween(cAt, now) <= COMMENT_DISPLAY_WINDOW_SEC) {
-    line += `\n\x1b[2m“${c}”\x1b[0m`;
+    line += `\n\x1b[2m"${c}"\x1b[0m`;
   }
 
   process.stdout.write(line);

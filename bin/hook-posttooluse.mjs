@@ -2,15 +2,6 @@
 // Pocket Pet PostToolUse hook — feeds terminal/edit activity into the engine.
 // stdin: Claude Code PostToolUse JSON (tool_name, tool_input, tool_output, exit_code).
 // The pet feeds on your builds, tests and pain. Zero tokens.
-import { loadState, saveState } from '../dist/src/persistence.js';
-import { applyEvent } from '../dist/src/engine/events.js';
-
-async function readStdin() {
-  if (process.stdin.isTTY) return '';
-  let data = '';
-  for await (const chunk of process.stdin) data += chunk;
-  return data;
-}
 
 const TEST_RE = /\b(npm (run )?test|yarn test|pnpm test|vitest|jest|mocha|pytest|go test|cargo test|rspec|phpunit|gradle test|mvn test)\b/i;
 const BUILD_RE = /\b(npm run build|yarn build|pnpm build|make\b|tsc\b|cargo build|go build|gradle build|mvn (package|install)|webpack|vite build|next build|cmake)\b/i;
@@ -49,7 +40,6 @@ function eventsFor(input, now) {
     if (failed) {
       events.push({ type: 'error_detected', at: now });
     } else {
-      // A clean command resolves any active error streak.
       events.push({ type: 'error_resolved', at: now });
     }
   } else if (tool === 'Edit' || tool === 'Write' || tool === 'MultiEdit') {
@@ -60,13 +50,19 @@ function eventsFor(input, now) {
   return events;
 }
 
+async function readStdin() {
+  if (process.stdin.isTTY) return '';
+  let data = '';
+  for await (const chunk of process.stdin) data += chunk;
+  return data;
+}
+
 async function main() {
+  const { loadState, saveState } = await import('../dist/src/persistence.js');
+  const { applyEvent } = await import('../dist/src/engine/events.js');
+
   let input = {};
-  try {
-    input = JSON.parse((await readStdin()) || '{}');
-  } catch {
-    input = {};
-  }
+  try { input = JSON.parse((await readStdin()) || '{}'); } catch { input = {}; }
 
   const now = new Date().toISOString();
   let state = loadState();
@@ -80,12 +76,10 @@ async function main() {
   saveState(state);
 
   if (lastComment) {
-    process.stdout.write(JSON.stringify({ systemMessage: `🐾 “${lastComment}”`, suppressOutput: true }));
+    process.stdout.write(JSON.stringify({ systemMessage: `🐾 "${lastComment}"`, suppressOutput: true }));
   } else {
     process.stdout.write('{}');
   }
 }
 
-main().catch(() => {
-  process.stdout.write('{}');
-});
+main().catch(() => process.stdout.write('{}'));
