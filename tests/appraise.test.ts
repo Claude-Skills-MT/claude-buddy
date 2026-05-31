@@ -8,7 +8,7 @@ describe('appraiseBuddy', () => {
   it('produces a multi-line report for the active buddy', () => {
     const out = appraiseBuddy(s);
     expect(out).toContain('Appraisal');
-    expect(out).toContain('emotional makeup');
+    expect(out).toContain('Axes');
     expect(out).toContain('victories');
   });
 

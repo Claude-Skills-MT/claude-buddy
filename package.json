@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "buddy": "node bin/buddy.mjs",
+    "pocket-pet": "node bin/pocket-pet.mjs",
     "install-pet": "npm run build && node bin/install.mjs",
     "uninstall-pet": "node bin/install.mjs --uninstall"
   },

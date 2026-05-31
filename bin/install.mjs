@@ -70,8 +70,11 @@ function install() {
 
   save(s);
   console.log(`\n🐾 Pocket Pet installed into ${SETTINGS}`);
-  console.log('Restart Claude Code (or start a new session) to see your buddy in the status line.');
-  console.log(`\nManage it with:  node ${join(BIN, 'buddy.mjs')} <command>`);
+  console.log('Start a new Claude Code session to activate the hooks.');
+  console.log(`\nFirst, choose your starter:\n`);
+  console.log(`  node ${join(BIN, 'pocket-pet.mjs')} choose`);
+  console.log(`\nThen manage it with:\n`);
+  console.log(`  node ${join(BIN, 'pocket-pet.mjs')} <command>`);
 }
 
 function uninstall() {

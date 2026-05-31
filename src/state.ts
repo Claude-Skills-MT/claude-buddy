@@ -72,3 +72,14 @@ export function createInitialState(starterBuddyId: string, nowIso: string): Game
     session: createInitialSessionState(nowIso),
   };
 }
+
+// State before the user has chosen a starter. activeBuddy is empty string, roster is empty.
+export function createEmptyState(nowIso: string): GameState {
+  return {
+    version: STATE_VERSION,
+    activeBuddy: '',
+    roster: [],
+    player: createInitialPlayerState(),
+    session: createInitialSessionState(nowIso),
+  };
+}

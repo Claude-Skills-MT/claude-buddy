@@ -41,6 +41,12 @@ async function main() {
     saveState(state);
   }
 
+  // No buddy chosen yet — prompt the user without crashing.
+  if (!state.activeBuddy || state.roster.length === 0) {
+    process.stdout.write('🐾 No buddy — run: /pocket-pet choose');
+    return;
+  }
+
   // Base status line.
   let line = render(state);
 

@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import type { GameState, BuddyState } from './types.js';
-import { createInitialState } from './state.js';
+import { createInitialState, createEmptyState } from './state.js';
 import { STATE_VERSION } from './constants.js';
 import { rollPersonalityForId } from './engine/personality.js';
 
@@ -58,7 +58,8 @@ export function loadState(path?: string): GameState {
     const raw = JSON.parse(readFileSync(p, 'utf8'));
     return migrate(raw);
   } catch {
-    return createInitialState(DEFAULT_BUDDY, new Date().toISOString());
+    // No state file yet — return empty state so the user goes through starter flow.
+    return createEmptyState(new Date().toISOString());
   }
 }
 
