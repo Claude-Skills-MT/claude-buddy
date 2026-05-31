@@ -51,13 +51,10 @@ async function main() {
       saveState(state);
     }
 
-    let line = render(state);
     const c   = state.session.lastComment;
     const cAt = state.session.lastCommentAt;
-    if (c && cAt && secsBetween(cAt, now) <= COMMENT_DISPLAY_WINDOW_SEC) {
-      line += `\n\x1b[2m"${c}"\x1b[0m`;
-    }
-    process.stdout.write(line);
+    const comment = (c && cAt && secsBetween(cAt, now) <= COMMENT_DISPLAY_WINDOW_SEC) ? c : undefined;
+    process.stdout.write(render(state, comment));
   } catch {
     // dist/ missing — show a minimal line so the statusline isn't blank.
     const buddy = raw.roster.find(b => b.buddyId === raw.activeBuddy);
