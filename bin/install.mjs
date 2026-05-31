@@ -16,10 +16,10 @@ const SETTINGS = join(SETTINGS_DIR, 'settings.json');
 
 const MARK = '__pocketPet'; // tag we add so we can find/remove our own entries
 
-const statusline = join(BIN, 'statusline.mjs');
-const sessionStart = join(BIN, 'hook-session-start.mjs');
-const postToolUse = join(BIN, 'hook-posttooluse.mjs');
-const sessionEnd = join(BIN, 'hook-session-end.mjs');
+const statusline = join(BIN, 'statusline.cjs');
+const sessionStart = join(BIN, 'hook-session-start.cjs');
+const postToolUse = join(BIN, 'hook-posttooluse.cjs');
+const sessionEnd = join(BIN, 'hook-session-end.cjs');
 
 function load() {
   if (!existsSync(SETTINGS)) return {};
