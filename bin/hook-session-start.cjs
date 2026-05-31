@@ -3,6 +3,10 @@
 const fs   = require('fs');
 const path = require('path');
 const os   = require('os');
+const url  = require('url');
+
+// Resolve dist/ relative to this file, not the process CWD.
+const DIST = path.join(__dirname, '..', 'dist');
 
 const STARTERS = [
   { id: 'nullpup',  label: 'Nullpup',  trait: 'Sarcastic', personality: 'Aloof',       desc: 'cool, distant, and devastatingly sarcastic', blurb: '"everything is fine. it\'s not."' },
@@ -42,9 +46,9 @@ async function main() {
 
   // Has a buddy — delegate to the engine (needs dist/).
   try {
-    const { loadState, saveState } = await import('../dist/src/persistence.js');
-    const { applyEvent }           = await import('../dist/src/engine/events.js');
-    const { render }               = await import('../dist/src/render.js');
+    const { loadState, saveState } = await import(url.pathToFileURL(path.join(DIST, 'src/persistence.js')).href);
+    const { applyEvent }           = await import(url.pathToFileURL(path.join(DIST, 'src/engine/events.js')).href);
+    const { render }               = await import(url.pathToFileURL(path.join(DIST, 'src/render.js')).href);
 
     const now     = new Date().toISOString();
     const today   = now.slice(0, 10);

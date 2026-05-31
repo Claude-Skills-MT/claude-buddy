@@ -1,9 +1,11 @@
-#!/usr/bin/env node
+'use strict';
 // Pocket Pet PostToolUse hook — feeds terminal/edit activity into the engine.
-// stdin: Claude Code PostToolUse JSON (tool_name, tool_input, tool_output, exit_code).
-// The pet feeds on your builds, tests and pain. Zero tokens.
+const path = require('path');
+const url  = require('url');
 
-const TEST_RE = /\b(npm (run )?test|yarn test|pnpm test|vitest|jest|mocha|pytest|go test|cargo test|rspec|phpunit|gradle test|mvn test)\b/i;
+const DIST = path.join(__dirname, '..', 'dist');
+
+const TEST_RE  = /\b(npm (run )?test|yarn test|pnpm test|vitest|jest|mocha|pytest|go test|cargo test|rspec|phpunit|gradle test|mvn test)\b/i;
 const BUILD_RE = /\b(npm run build|yarn build|pnpm build|make\b|tsc\b|cargo build|go build|gradle build|mvn (package|install)|webpack|vite build|next build|cmake)\b/i;
 
 const LANG_BY_EXT = {
@@ -16,32 +18,23 @@ const LANG_BY_EXT = {
 function langForPath(p) {
   if (!p) return undefined;
   const ext = p.split('.').pop()?.toLowerCase();
-  return ext ? LANG_BY_EXT[ext] : undefined;
+  return LANG_BY_EXT[ext];
 }
 
 function eventsFor(input, now) {
   const events = [];
-  const tool = input.tool_name;
-  const ti = input.tool_input ?? {};
-  const exit = input.exit_code;
+  const tool   = input.tool_name;
+  const ti     = input.tool_input ?? {};
+  const exit   = input.exit_code;
   const failed = input.tool_result === 'error' || (typeof exit === 'number' && exit !== 0);
 
   if (tool === 'Bash') {
-    const cmd = String(ti.command ?? '');
-    const isTest = TEST_RE.test(cmd);
+    const cmd     = String(ti.command ?? '');
+    const isTest  = TEST_RE.test(cmd);
     const isBuild = BUILD_RE.test(cmd);
-
-    if (isTest) {
-      events.push({ type: failed ? 'test_fail' : 'test_pass', at: now });
-    }
-    if (isBuild && !failed) {
-      events.push({ type: 'build_success', at: now });
-    }
-    if (failed) {
-      events.push({ type: 'error_detected', at: now });
-    } else {
-      events.push({ type: 'error_resolved', at: now });
-    }
+    if (isTest)         events.push({ type: failed ? 'test_fail' : 'test_pass', at: now });
+    if (isBuild && !failed) events.push({ type: 'build_success', at: now });
+    events.push({ type: failed ? 'error_detected' : 'error_resolved', at: now });
   } else if (tool === 'Edit' || tool === 'Write' || tool === 'MultiEdit') {
     const lang = langForPath(ti.file_path);
     if (lang) events.push({ type: 'language_tag', at: now, lang });
@@ -58,8 +51,8 @@ async function readStdin() {
 }
 
 async function main() {
-  const { loadState, saveState } = await import('../dist/src/persistence.js');
-  const { applyEvent } = await import('../dist/src/engine/events.js');
+  const { loadState, saveState } = await import(url.pathToFileURL(path.join(DIST, 'src/persistence.js')).href);
+  const { applyEvent }           = await import(url.pathToFileURL(path.join(DIST, 'src/engine/events.js')).href);
 
   let input = {};
   try { input = JSON.parse((await readStdin()) || '{}'); } catch { input = {}; }

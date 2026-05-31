@@ -11,15 +11,19 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = dirname(HERE);
 const BIN = join(REPO, 'bin');
 
+// Forward slashes work on Windows, macOS and Linux. Backslashes in a command
+// string break when Claude Code runs hooks through bash (e.g. Git Bash on Windows).
+function fwd(p) { return p.replace(/\\/g, '/'); }
+
 const SETTINGS_DIR = join(homedir(), '.claude');
 const SETTINGS = join(SETTINGS_DIR, 'settings.json');
 
 const MARK = '__pocketPet'; // tag we add so we can find/remove our own entries
 
-const statusline = join(BIN, 'statusline.cjs');
-const sessionStart = join(BIN, 'hook-session-start.cjs');
-const postToolUse = join(BIN, 'hook-posttooluse.cjs');
-const sessionEnd = join(BIN, 'hook-session-end.cjs');
+const statusline   = fwd(join(BIN, 'statusline.cjs'));
+const sessionStart = fwd(join(BIN, 'hook-session-start.cjs'));
+const postToolUse  = fwd(join(BIN, 'hook-posttooluse.cjs'));
+const sessionEnd   = fwd(join(BIN, 'hook-session-end.cjs'));
 
 function load() {
   if (!existsSync(SETTINGS)) return {};
@@ -72,9 +76,9 @@ function install() {
   console.log(`\n🐾 Pocket Pet installed into ${SETTINGS}`);
   console.log('Start a new Claude Code session to activate the hooks.');
   console.log(`\nFirst, choose your starter:\n`);
-  console.log(`  node ${join(BIN, 'pocket-pet.mjs')} choose`);
+  console.log(`  node ${fwd(join(BIN, 'pocket-pet.mjs'))} choose`);
   console.log(`\nThen manage it with:\n`);
-  console.log(`  node ${join(BIN, 'pocket-pet.mjs')} <command>`);
+  console.log(`  node ${fwd(join(BIN, 'pocket-pet.mjs'))} <command>`);
 }
 
 function uninstall() {
