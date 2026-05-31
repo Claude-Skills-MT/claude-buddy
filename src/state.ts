@@ -2,9 +2,11 @@ import type { GameState, BuddyState, PlayerState, SessionState } from './types.j
 import type { BuddyDef } from '../data/buddies.js';
 import { BUDDIES_BY_ID } from '../data/buddies.js';
 import { STATE_VERSION } from './constants.js';
+import { rollPersonalityForId } from './engine/personality.js';
 
 export function createInitialBuddyState(def: BuddyDef): BuddyState {
   const form = def.forms[0];
+  const { personality, baseAxes } = rollPersonalityForId(def.id);
   return {
     buddyId: def.id,
     currentForm: form?.name ?? def.id,
@@ -20,6 +22,13 @@ export function createInitialBuddyState(def: BuddyDef): BuddyState {
     moodSince: new Date().toISOString(),
     accessoriesUnlocked: [],
     bondMilestones: [],
+    personality,
+    baseAxes,
+    attachment: 0,
+    sharedSuccesses: 0,
+    sharedFailures: 0,
+    hunger: 0,
+    timesFed: 0,
   };
 }
 
@@ -35,6 +44,7 @@ export function createInitialPlayerState(): PlayerState {
     comebackGiftGiven: false,
     midnightBuildDays: 0,
     totalPulls: 0,
+    food: {},
   };
 }
 

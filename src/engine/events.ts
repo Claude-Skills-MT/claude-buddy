@@ -19,6 +19,9 @@ import {
   shouldCommentWithMood,
 } from './comments.js';
 import { talkReply } from './talk.js';
+import { personalityLine } from './personality.js';
+import { recordSuccess, recordFailure, applyTime, isHungry } from './attachment.js';
+import { feed, buyFood, chooseFoodForBuddy } from './store.js';
 
 export type PetEvent =
   | { type: 'session_start'; at: string; firstOfDay: boolean }
@@ -34,12 +37,20 @@ export type PetEvent =
   | { type: 'release'; at: string; buddyId: string; confirm: boolean }
   | { type: 'force_unlock'; at: string; buddyId: string }
   | { type: 'talk'; at: string; text: string }
+  | { type: 'feed'; at: string; foodId?: string }
+  | { type: 'buy_food'; at: string; foodId: string; qty: number }
+  | { type: 'rename'; at: string; buddyId?: string; nickname: string }
   | { type: 'session_end'; at: string };
 
 export interface ApplyResult {
   state: GameState;
   comment?: string;
   reply?: string;
+}
+
+// Display name for the active buddy: the user's nickname if set, else the form.
+function displayName(b: { nickname?: string; currentForm: string }): string {
+  return b.nickname ?? b.currentForm;
 }
 
 function today(isoDate: string): string {
@@ -165,7 +176,7 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
         ...s,
         roster: s.roster.map((b) =>
           b.buddyId === s.activeBuddy
-            ? { ...b, tameHours: b.tameHours + hoursGained, xp: b.xp + xpGained }
+            ? applyTime({ ...b, tameHours: b.tameHours + hoursGained, xp: b.xp + xpGained }, hoursGained)
             : { ...b, xp: b.xp + Math.floor(xpGained * 0.1) },
         ),
         player: {
@@ -214,17 +225,24 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
 
         if (triggers.length === 0) triggers.push('idle_nudge');
 
-        // Pick roster buddy for roast context
-        const rosterBuddy = s.roster.find((b) => b.buddyId !== s.activeBuddy);
-        const rosterDef = rosterBuddy ? BUDDIES_BY_ID[rosterBuddy.buddyId] : undefined;
+        // A hungry buddy lets you know — in its own voice — before anything else.
+        if (isHungry(abAfter)) {
+          comment = personalityLine(abAfter.personality, 'hungry', { name: displayName(abAfter) }, rng) ?? undefined;
+        }
 
-        comment = selectComment(triggers, {
-          rarity: abAfter.rarity,
-          traitPrimary: abAfter.traitPrimary,
-          evolutionStage: abAfter.evolutionStage,
-          rosterName: rosterBuddy?.currentForm,
-          rosterTrait: rosterDef?.traitPrimary,
-        }, rng) ?? undefined;
+        if (comment === undefined) {
+          // Pick roster buddy for roast context
+          const rosterBuddy = s.roster.find((b) => b.buddyId !== s.activeBuddy);
+          const rosterDef = rosterBuddy ? BUDDIES_BY_ID[rosterBuddy.buddyId] : undefined;
+
+          comment = selectComment(triggers, {
+            rarity: abAfter.rarity,
+            traitPrimary: abAfter.traitPrimary,
+            evolutionStage: abAfter.evolutionStage,
+            rosterName: rosterBuddy?.currentForm,
+            rosterTrait: rosterDef?.traitPrimary,
+          }, rng) ?? undefined;
+        }
 
         if (comment) {
           s = { ...s, session: { ...s.session, lastCommentAt: event.at, lastComment: comment } };
@@ -242,7 +260,7 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
       s = {
         ...s,
         roster: s.roster.map((b) =>
-          b.buddyId === s.activeBuddy ? { ...b, xp: b.xp + xp } : b,
+          b.buddyId === s.activeBuddy ? recordFailure({ ...b, xp: b.xp + xp }) : b,
         ),
         session: { ...s.session, errorStreakActive: true },
       };
@@ -267,17 +285,20 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
       s = {
         ...s,
         roster: s.roster.map((b) =>
-          b.buddyId === s.activeBuddy ? { ...b, xp: b.xp + xp } : b,
+          b.buddyId === s.activeBuddy ? recordSuccess({ ...b, xp: b.xp + xp }) : b,
         ),
         player: { ...s.player, shardBalance: s.player.shardBalance + shards },
       };
       s = postEvolveBond(s);
       const ab = activeBuddy(s);
-      const comment = selectComment(['build_success'], {
-        rarity: ab.rarity,
-        traitPrimary: ab.traitPrimary,
-        evolutionStage: ab.evolutionStage,
-      }, rng) ?? undefined;
+      // Celebrate in the buddy's own voice; fall back to the generic pool.
+      const comment =
+        personalityLine(ab.personality, 'success', { name: displayName(ab) }, rng) ??
+        selectComment(['build_success'], {
+          rarity: ab.rarity,
+          traitPrimary: ab.traitPrimary,
+          evolutionStage: ab.evolutionStage,
+        }, rng) ?? undefined;
       return { state: s, comment };
     }
 
@@ -287,19 +308,27 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
       s = {
         ...s,
         roster: s.roster.map((b) =>
-          b.buddyId === s.activeBuddy ? { ...b, xp: b.xp + xp } : b,
+          b.buddyId === s.activeBuddy ? recordSuccess({ ...b, xp: b.xp + xp }) : b,
         ),
       };
       return { state: s };
     }
 
     case 'test_fail': {
+      s = {
+        ...s,
+        roster: s.roster.map((b) =>
+          b.buddyId === s.activeBuddy ? recordFailure(b) : b,
+        ),
+      };
       const ab = activeBuddy(s);
-      const comment = selectComment(['test_fail'], {
-        rarity: ab.rarity,
-        traitPrimary: ab.traitPrimary,
-        evolutionStage: ab.evolutionStage,
-      }, rng) ?? undefined;
+      const comment =
+        personalityLine(ab.personality, 'failure', { name: displayName(ab) }, rng) ??
+        selectComment(['test_fail'], {
+          rarity: ab.rarity,
+          traitPrimary: ab.traitPrimary,
+          evolutionStage: ab.evolutionStage,
+        }, rng) ?? undefined;
       return { state: s, comment };
     }
 
@@ -355,14 +384,48 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
 
     case 'talk': {
       const ab = activeBuddy(s);
-      const reply = talkReply(ab.rarity, ab.traitPrimary, ab.evolutionStage, event.text, rng);
+      const reply = talkReply(
+        ab.rarity, ab.traitPrimary, ab.evolutionStage, event.text, rng,
+        ab.personality, displayName(ab),
+      );
       return { state: s, reply };
     }
 
+    case 'feed': {
+      const ab = activeBuddy(s);
+      const foodId = event.foodId ?? chooseFoodForBuddy(s, ab) ?? '';
+      const { state: newState, food, isFavorite } = feed(s, foodId, event.at);
+      s = newState;
+      const fedBuddy = activeBuddy(s);
+      const context = isFavorite ? 'fed' : 'fed_reluctant';
+      const reply =
+        personalityLine(fedBuddy.personality, context, { name: displayName(fedBuddy), food: food.name }, rng) ??
+        personalityLine(fedBuddy.personality, 'fed', { name: displayName(fedBuddy), food: food.name }, rng) ??
+        `${food.emoji} *munch*`;
+      return { state: s, reply };
+    }
+
+    case 'buy_food': {
+      s = buyFood(s, event.foodId, event.qty);
+      return { state: s };
+    }
+
+    case 'rename': {
+      const id = event.buddyId ?? s.activeBuddy;
+      const nickname = event.nickname.trim();
+      s = {
+        ...s,
+        roster: s.roster.map((b) =>
+          b.buddyId === id ? { ...b, nickname: nickname || undefined } : b,
+        ),
+      };
+      return { state: s };
+    }
+
     case 'session_end': {
-      // Persist tameHours based on session duration
+      // Persist tameHours based on session duration; let hunger/bond track that time.
       const sessionHours = (new Date(event.at).getTime() - new Date(s.session.sessionStart).getTime()) / 3600000;
-      s = updateActiveBuddy(s, (b) => ({ ...b, tameHours: b.tameHours + sessionHours }));
+      s = updateActiveBuddy(s, (b) => applyTime({ ...b, tameHours: b.tameHours + sessionHours }, sessionHours));
       s = postEvolveBond(s);
       return { state: s };
     }

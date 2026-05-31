@@ -1,4 +1,5 @@
 import type { GameState } from './types.js';
+import { hearts, hungerTier } from './engine/attachment.js';
 
 const MOOD_EMOJI: Record<string, string> = {
   bored: '😑',
@@ -25,13 +26,17 @@ export function render(state: GameState): string {
 
   const rarityIcon = RARITY_EMOJI[buddy.rarity] ?? '?';
   const moodIcon = MOOD_EMOJI[buddy.mood] ?? '?';
-  const name = buddy.currentForm;
+  // The user's nickname wins; the species form trails in parentheses.
+  const name = buddy.nickname ? `${buddy.nickname} (${buddy.currentForm})` : buddy.currentForm;
   const level = buddy.rarity === 'legendary' ? `Lv${buddy.level}` : `S${buddy.evolutionStage}`;
   const xp = buddy.xp;
   const shards = state.player.shardBalance;
   const streak = state.player.streakDays > 0 ? `🔥${state.player.streakDays}d` : '';
+  const h = hearts(buddy.attachment);
+  const bond = `${'♥'.repeat(h)}${'·'.repeat(5 - h)}`;
 
-  const parts = [`${rarityIcon} ${name} ${level}`, moodIcon, `${xp}✨`, `${shards}💎`];
+  const parts = [`${rarityIcon} ${name} ${level}`, moodIcon, bond, `${xp}✨`, `${shards}💎`];
+  if (hungerTier(buddy.hunger) === 'Starving' || hungerTier(buddy.hunger) === 'Hungry') parts.push('🍖');
   if (streak) parts.push(streak);
 
   return parts.join(' · ');
@@ -47,7 +52,10 @@ export function renderCollection(state: GameState): string {
     const active = b.buddyId === state.activeBuddy ? ' ◄' : '';
     const rarityIcon = RARITY_EMOJI[b.rarity] ?? '?';
     const moodIcon = MOOD_EMOJI[b.mood] ?? '?';
-    lines.push(`  ${rarityIcon} ${b.currentForm} (${b.rarity}) ${moodIcon} ${b.xp}✨${active}`);
+    const h = hearts(b.attachment);
+    const bond = `${'♥'.repeat(h)}${'·'.repeat(5 - h)}`;
+    const label = b.nickname ? `${b.nickname} (${b.currentForm})` : b.currentForm;
+    lines.push(`  ${rarityIcon} ${label} ${moodIcon} ${bond} ${b.xp}✨${active}`);
   }
   return lines.join('\n');
 }

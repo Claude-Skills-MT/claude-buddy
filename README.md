@@ -9,7 +9,7 @@ Every passive behavior is **deterministic and zero-token** — it runs as plain
 Node scripts wired into Claude Code's status line and hooks. No model calls.
 
 ```
-◆ Glitchlet S0 · 🤔 · 925✨ · 7💎 · 🔥3d
+◆ Steve (Glitchara) S2 · 🤔 · ♥♥♥♥· · 925✨ · 7💎 · 🍖 · 🔥3d
 “look who remembered they have a license.”
 ```
 
@@ -62,6 +62,34 @@ npm run buddy release <buddyId>      # release for shards (legendary needs --for
 npm run buddy talk "hey"             # say something (it deflects coding questions)
 ```
 
+### Emotional attachment
+
+Your buddy bonds with you over time — and, like the Pokémon anime, the **failures
+you survive together** bond you even harder than the wins. Each buddy also rolls a
+**personality** (independent of its species), and evolution **amplifies** it: a
+stubborn Charmeleon becomes an even more stubborn Charizard.
+
+```bash
+npm run buddy appraise               # team-leader appraisal: bond, nature, axis bars, shared history
+npm run buddy store                  # browse food + your pantry
+npm run buddy buy heart-honey 3      # buy food with shards
+npm run buddy feed                   # feed the active buddy (auto-picks a favorite/cheapest)
+npm run buddy feed cache-cake        # …or feed a specific food
+npm run buddy name Steve             # nickname your buddy ("though it's a Charizard, I call it Steve")
+npm run buddy name nullgod Bolt      # nickname a specific roster buddy
+```
+
+- **Attachment** (0–100, shown as ♥♥♥··) grows from time together, shared
+  successes, shared failures, and feeding. Devoted personalities bond fast; aloof
+  and stubborn ones make you earn it. A starving, neglected buddy loses faith.
+- **Personalities** — Stubborn, Born Leader, Devoted, Responsible, Aloof, Tender,
+  Hotheaded, Timid, Mischievous, Loyal — each with its own voice across success,
+  failure, feeding, hunger and chitchat, sitting on six emotional axes (sarcasm,
+  stubbornness, affection, tenderness, leadership, responsibility).
+- **Food & hunger** — hunger rises as you work (🍖 appears in the status line).
+  Foods are monster-world flavored (Glitchberry, Heart Honey, Captain's Crust…) and
+  some resonate with a personality, landing extra bond when fed.
+
 State lives at `~/.claude-buddy/state.json` (override with `CLAUDE_BUDDY_STATE`).
 
 ## The system
@@ -77,6 +105,9 @@ State lives at `~/.claude-buddy/state.json` (override with `CLAUDE_BUDDY_STATE`)
   unlocks and an Awakened form at Lv 81+.
 - **Moods, streaks & comeback roasts** (six severity tiers from "oh. you're back."
   to full devastation), swap-sulk rules, seasonal events.
+- **Emotional attachment**: per-instance personalities amplified by evolution, a
+  bond fed by time + shared wins + shared failures, hunger, a food store, nicknames,
+  and a Pokémon-GO-style appraisal.
 - **Talk mode** that never answers coding questions — it deflects in character.
 
 ## Architecture
@@ -96,6 +127,6 @@ Everything in `src/engine` and `data` is time- and randomness-injected, so it's
 fully reproducible. Run the suite:
 
 ```bash
-npm test          # 138 tests
+npm test          # 191 tests
 npm run typecheck
 ```

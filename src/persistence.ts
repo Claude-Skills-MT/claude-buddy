@@ -1,9 +1,10 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
-import type { GameState } from './types.js';
+import type { GameState, BuddyState } from './types.js';
 import { createInitialState } from './state.js';
 import { STATE_VERSION } from './constants.js';
+import { rollPersonalityForId } from './engine/personality.js';
 
 const DEFAULT_BUDDY = 'glitchlet';
 
@@ -11,15 +12,43 @@ export function statePath(): string {
   return process.env['CLAUDE_BUDDY_STATE'] ?? join(homedir(), '.claude-buddy', 'state.json');
 }
 
+// Backfill the emotional-attachment fields onto a pre-v2 buddy without losing its
+// progress. Personality is rolled deterministically from the buddyId so it's stable.
+function backfillBuddy(raw: Partial<BuddyState> & { buddyId: string }): BuddyState {
+  const rolled = rollPersonalityForId(raw.buddyId);
+  return {
+    ...raw,
+    personality: raw.personality ?? rolled.personality,
+    baseAxes: raw.baseAxes ?? rolled.baseAxes,
+    attachment: raw.attachment ?? 0,
+    sharedSuccesses: raw.sharedSuccesses ?? 0,
+    sharedFailures: raw.sharedFailures ?? 0,
+    hunger: raw.hunger ?? 0,
+    timesFed: raw.timesFed ?? 0,
+  } as BuddyState;
+}
+
 export function migrate(raw: unknown): GameState {
   if (typeof raw !== 'object' || raw === null) {
     return createInitialState(DEFAULT_BUDDY, new Date().toISOString());
   }
   const r = raw as Record<string, unknown>;
-  if ((r['version'] as number) === STATE_VERSION) {
-    return raw as GameState;
+  const version = (r['version'] as number) ?? 0;
+
+  if (version === STATE_VERSION) return raw as GameState;
+
+  // v1 -> v2: add the emotional-attachment layer. Preserve all existing progress.
+  if (version === 1 && Array.isArray(r['roster']) && typeof r['player'] === 'object') {
+    const player = r['player'] as Record<string, unknown>;
+    return {
+      ...(raw as GameState),
+      version: STATE_VERSION,
+      roster: (r['roster'] as (Partial<BuddyState> & { buddyId: string })[]).map(backfillBuddy),
+      player: { ...(player as unknown as GameState['player']), food: (player['food'] as Record<string, number>) ?? {} },
+    };
   }
-  // Future migrations go here; for now, reset on unknown version
+
+  // Unknown/older shape — start fresh.
   return createInitialState(DEFAULT_BUDDY, new Date().toISOString());
 }
 

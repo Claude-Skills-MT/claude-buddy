@@ -22,6 +22,17 @@ export type Trigger =
   | 'streak_break_roast'
   | 'comeback';
 
+// Emotional axes — the "layers" of a personality. 0-100 each.
+export interface AxisProfile {
+  sarcasm: number;
+  stubbornness: number;
+  affection: number;
+  tenderness: number;
+  leadership: number;
+  responsibility: number;
+}
+export type EmotionAxis = keyof AxisProfile;
+
 export interface BuddyState {
   buddyId: string;
   currentForm: string;
@@ -38,6 +49,16 @@ export interface BuddyState {
   accessoriesUnlocked: string[];
   bondMilestones: BondFlag[];
   awakenedAt?: string;
+  // ── Emotional attachment layer ──────────────────────────────
+  nickname?: string;            // user-given name ("Steve") — overrides currentForm in display
+  personality: string;         // archetype id (rolled per instance, like a Pokémon's nature)
+  baseAxes: AxisProfile;       // rolled at creation; amplified by evolution at read-time
+  attachment: number;          // 0-100 — the emotional bond
+  sharedSuccesses: number;     // builds/tests passed together
+  sharedFailures: number;      // errors/test fails survived together (these bond you MORE)
+  hunger: number;              // 0 (full) .. 100 (starving) — rises over time, feeding lowers it
+  timesFed: number;
+  lastFedAt?: string;
 }
 
 export interface PlayerState {
@@ -51,6 +72,7 @@ export interface PlayerState {
   comebackGiftGiven: boolean;
   midnightBuildDays: number;
   totalPulls: number;
+  food: Record<string, number>;  // foodId -> count owned
 }
 
 export interface SessionState {

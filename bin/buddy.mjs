@@ -4,6 +4,8 @@
 import { loadState, saveState, statePath } from '../dist/src/persistence.js';
 import { applyEvent } from '../dist/src/engine/events.js';
 import { render, renderCollection } from '../dist/src/render.js';
+import { appraiseBuddy } from '../dist/src/engine/appraise.js';
+import { FOODS, FOODS_BY_ID } from '../dist/data/food.js';
 
 const now = () => new Date().toISOString();
 
@@ -20,6 +22,14 @@ Usage: buddy <command> [args]
   release <buddyId> [--force]
                          Release a buddy for shards (legendary needs --force)
   talk <message...>      Say something to your buddy
+
+  Emotional attachment:
+  appraise [buddyId]     Get a team-leader appraisal of your buddy's bond & nature
+  store                  Browse the food store and your pantry
+  buy <foodId> [qty]     Buy food with shards
+  feed [foodId]          Feed your active buddy (picks a favorite/cheapest if omitted)
+  name <nickname>        Nickname your active buddy ("Steve")
+  name <buddyId> <nick>  Nickname a specific roster buddy
   help                   Show this help
 `);
 }
@@ -92,6 +102,70 @@ function main() {
       const text = args.join(' ');
       const result = applyEvent(state, { type: 'talk', at: now(), text });
       console.log(`🐾 “${result.reply}”`);
+      break;
+    }
+
+    case 'appraise': {
+      console.log(appraiseBuddy(state, args[0]));
+      break;
+    }
+
+    case 'store': {
+      console.log(`Store 🛒  (balance: ${state.player.shardBalance}💎)\n`);
+      for (const f of FOODS) {
+        const owned = state.player.food?.[f.id] ?? 0;
+        console.log(`  ${f.emoji} ${f.id.padEnd(16)} ${String(f.cost).padStart(3)}💎  -${f.nourish} hunger  +${f.attachment}♥${f.favoredAxis ? ` (loved by ${f.favoredAxis})` : ''}  ${owned ? `[have ${owned}]` : ''}`);
+        console.log(`     ${f.blurb}`);
+      }
+      console.log(`\nBuy with:  buddy buy <foodId> [qty]`);
+      break;
+    }
+
+    case 'buy': {
+      const foodId = args[0];
+      const qty = Number(args[1] ?? '1');
+      if (!foodId || !FOODS_BY_ID[foodId]) {
+        console.error('Usage: buddy buy <foodId> [qty]   (see "buddy store")');
+        process.exit(1);
+      }
+      try {
+        const result = applyEvent(state, { type: 'buy_food', at: now(), foodId, qty });
+        state = result.state;
+        saveState(state);
+        const f = FOODS_BY_ID[foodId];
+        console.log(`Bought ${qty}× ${f.emoji} ${f.name}. Balance: ${state.player.shardBalance}💎`);
+      } catch (e) {
+        console.error(String(e.message ?? e));
+        process.exit(1);
+      }
+      break;
+    }
+
+    case 'feed': {
+      try {
+        const result = applyEvent(state, { type: 'feed', at: now(), foodId: args[0] });
+        state = result.state;
+        saveState(state);
+        console.log(`🐾 “${result.reply}”`);
+        console.log(render(state));
+      } catch (e) {
+        console.error(String(e.message ?? e));
+        process.exit(1);
+      }
+      break;
+    }
+
+    case 'name': {
+      if (args.length === 0) { console.error('Usage: buddy name <nickname>  |  buddy name <buddyId> <nickname>'); process.exit(1); }
+      // If the first arg is a roster buddyId, treat the rest as the nickname.
+      const isId = state.roster.some((b) => b.buddyId === args[0]);
+      const buddyId = isId ? args[0] : undefined;
+      const nickname = (isId ? args.slice(1) : args).join(' ');
+      if (!nickname) { console.error('Give a nickname.'); process.exit(1); }
+      const result = applyEvent(state, { type: 'rename', at: now(), buddyId, nickname });
+      state = result.state;
+      saveState(state);
+      console.log(render(state));
       break;
     }
 
