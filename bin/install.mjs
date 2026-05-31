@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// Pocket Pet installer — wires the statusline + hooks into ~/.claude/settings.json
-// and installs the /pocket-pet skill into ~/.claude/skills.
+// Pocket Pet installer — wires the statusline + hooks into ~/.claude/settings.json.
 // Usage: node bin/install.mjs           (install)
 //        node bin/install.mjs --uninstall
 import { readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync, rmSync } from 'node:fs';
@@ -18,7 +17,7 @@ function fwd(p) { return p.replace(/\\/g, '/'); }
 
 const SETTINGS_DIR = join(homedir(), '.claude');
 const SETTINGS = join(SETTINGS_DIR, 'settings.json');
-const SKILLS_DIR = join(SETTINGS_DIR, 'skills', 'pocket-pet');
+const SKILLS_DIR = join(SETTINGS_DIR, 'skills', 'pocket-pet'); // kept for clean removal of older installs
 
 const MARK = '__pocketPet'; // tag we add so we can find/remove our own entries
 
@@ -65,57 +64,6 @@ function stripOurs(arr) {
   return (arr ?? []).filter((e) => !isOurs(e));
 }
 
-// The /pocket-pet skill — lets the user run the CLI from inside Claude Code.
-function skillBody() {
-  return `---
-name: pocket-pet
-description: Manage the user's Pocket Pet statusline companion — choose a starter buddy, check status, feed it, appraise its stats, buy food, or pull new buddies from the gacha. Use whenever the user types /pocket-pet, or asks to choose/feed/check/appraise their pocket pet, buddy, or creature.
----
-
-# Pocket Pet
-
-You drive the Pocket Pet CLI on the user's behalf. Pocket Pet is a deterministic,
-zero-token creature that lives in the Claude Code status line.
-
-When this skill is invoked, take whatever arguments the user passed (everything
-after \`/pocket-pet\`) and run the CLI with them. If no arguments were given, run
-\`status\` — unless the user has no buddy yet, in which case run \`choose\` to show
-the three starters.
-
-Run exactly this (substitute <ARGS>):
-
-\`\`\`bash
-node "${cli}" <ARGS>
-\`\`\`
-
-Print the CLI's output to the user verbatim, inside a code block. Do not editorialize
-or add commentary unless the user asks a follow-up question.
-
-## Commands
-
-- \`choose\` — list the three starter buddies (Nullpup / Byteling / Pingling)
-- \`choose 1\` (or 2, or 3) — pick that starter and activate it
-- \`status\` — the active buddy's status line
-- \`collection\` — roster, shards, pity counters
-- \`appraise [buddyId]\` — full stats: bond, personality, axes, history
-- \`feed [foodId]\` — feed the active buddy
-- \`store\` / \`buy <foodId> [qty]\` — food shop
-- \`pull <common|rare|legendary>\` — gacha pull with earned shards
-- \`swap <buddyId>\` / \`release <buddyId>\` / \`name <nickname>\` / \`talk <message>\`
-
-## First run
-
-If the user has never chosen a buddy, the status line and CLI will say so. Guide
-them to \`/pocket-pet choose\`, then \`/pocket-pet choose 1\` (or 2, or 3).
-`;
-}
-
-function installSkill() {
-  mkdirSync(SKILLS_DIR, { recursive: true });
-  writeFileSync(join(SKILLS_DIR, 'SKILL.md'), skillBody(), 'utf8');
-  console.log(`Installed /pocket-pet skill → ${join(SKILLS_DIR, 'SKILL.md')}`);
-}
-
 function install() {
   backup();
   const s = load();
@@ -133,14 +81,17 @@ function install() {
 
   s.hooks = s.hooks ?? {};
   s.hooks.SessionStart = [...stripOurs(s.hooks.SessionStart), { ...hookEntry(sessionStart), matcher: 'startup|resume|clear' }];
-  s.hooks.PostToolUse = [...stripOurs(s.hooks.PostToolUse), { ...hookEntry(postToolUse), matcher: 'Bash|Edit|Write|MultiEdit' }];
-  s.hooks.SessionEnd = [...stripOurs(s.hooks.SessionEnd), hookEntry(sessionEnd)];
+  s.hooks.PostToolUse  = [...stripOurs(s.hooks.PostToolUse),  { ...hookEntry(postToolUse),  matcher: 'Bash|Edit|Write|MultiEdit' }];
+  s.hooks.SessionEnd   = [...stripOurs(s.hooks.SessionEnd),   hookEntry(sessionEnd)];
 
   save(s);
-  installSkill();
 
   console.log(`\n🐾 Pocket Pet installed into ${SETTINGS}`);
-  console.log('Start a new Claude Code session, then run:  /pocket-pet choose');
+  console.log('\nPick your starter (run once in a terminal — zero tokens):');
+  console.log(`\n  node ${cli} choose`);
+  console.log(`  node ${cli} choose 1`);
+  console.log('\nThen start Claude Code. The pet lives in the status line — no tokens ever.');
+  console.log(`\nAll commands:  node ${cli} help`);
 }
 
 function uninstall() {
@@ -159,8 +110,8 @@ function uninstall() {
     if (Object.keys(s.hooks).length === 0) delete s.hooks;
   }
   save(s);
-  try { rmSync(SKILLS_DIR, { recursive: true, force: true }); } catch {}
-  console.log('🐾 Pocket Pet removed from settings.json and skills (your other settings are untouched).');
+  try { rmSync(SKILLS_DIR, { recursive: true, force: true }); } catch { /* already gone */ }
+  console.log('🐾 Pocket Pet removed from settings.json (your other settings are untouched).');
 }
 
 if (process.argv.includes('--uninstall')) uninstall();

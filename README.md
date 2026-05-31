@@ -43,34 +43,24 @@ npm run install-pet      # builds, wires up status line + hooks, installs the sk
 
 ### First-time setup: choose your starter
 
-After installing, **no buddy appears yet**. Just start a Claude Code session — the
-status line and the session-start banner both tell you to choose. Then, **inside
-Claude Code**, run the skill:
+After installing, **no buddy appears yet**. Open a terminal in the repo and run:
 
-```
-/pocket-pet choose
-```
-
-You'll see three candidates — each with a different personality kind:
-
-```
-Choose your starter — these three found you first.
-
-  1.  Nullpup      · Sarcastic       · Aloof — cool, distant, and devastatingly sarcastic
-       "everything is fine. it's not."
-
-  2.  Byteling     · Gruff           · Stubborn — as stubborn as they come
-       "doesn't explain itself. doesn't need to."
-
-  3.  Pingling     · Curious         · Mischievous — a playful little gremlin
-       "what does THAT do? and THAT? what about THIS?"
-
-Run:  /pocket-pet choose 1   (or 2, or 3)
+```bash
+node C:/path/to/claude-buddy/bin/pocket-pet.mjs choose
+# then pick one:
+node C:/path/to/claude-buddy/bin/pocket-pet.mjs choose 1
 ```
 
-Pick one with `/pocket-pet choose 1` (or 2, or 3) and your buddy appears in the
-status line. The other two are not added to your roster. No terminal step needed —
-everything runs through the skill inside Claude Code.
+Or with the npm script shortcut (from inside the repo):
+
+```bash
+npm run pocket-pet -- choose
+npm run pocket-pet -- choose 1
+```
+
+You'll see three candidates — each with a different personality kind. Pick one,
+start Claude Code, and your buddy appears in the status line. This one-time
+setup runs zero tokens — it's a plain Node script with no LLM involvement.
 
 To remove everything (restores cleanly, leaves your other settings alone):
 
@@ -80,20 +70,16 @@ npm run uninstall-pet
 
 ## Interacting with your pet
 
-Everything runs through the `/pocket-pet` skill **inside Claude Code**:
+All commands are plain Node scripts — **zero tokens**, no LLM:
 
+```bash
+npm run pocket-pet -- status              # current buddy's status line
+npm run pocket-pet -- collection          # roster, shards, pity counters
+npm run pocket-pet -- pull rare           # spend shards on a pull (common|rare|legendary)
+npm run pocket-pet -- swap <buddyId>      # make a roster buddy active
+npm run pocket-pet -- release <buddyId>   # release for shards (legendary needs --force)
+npm run pocket-pet -- talk "hey"          # say something (it deflects coding questions)
 ```
-/pocket-pet choose              # first-time: pick your starter
-/pocket-pet status              # current buddy's status line
-/pocket-pet collection          # roster, shards, pity counters
-/pocket-pet pull rare           # spend shards on a pull (common|rare|legendary)
-/pocket-pet swap <buddyId>      # make a roster buddy active
-/pocket-pet release <buddyId>   # release for shards (legendary needs --force)
-/pocket-pet talk "hey"          # say something (it deflects coding questions)
-```
-
-> The same commands are also available from a terminal with
-> `npm run pocket-pet -- <command>` if you prefer the shell.
 
 ### Emotional attachment
 
