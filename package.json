@@ -9,7 +9,10 @@
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "buddy": "node bin/buddy.mjs",
+    "install-pet": "npm run build && node bin/install.mjs",
+    "uninstall-pet": "node bin/install.mjs --uninstall"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

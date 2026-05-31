@@ -93,6 +93,11 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
   switch (event.type) {
     case 'session_start': {
       const d = today(event.at);
+      // Random summon: a buddy from the roster chooses you. (You didn't choose them.)
+      if (s.roster.length > 0) {
+        const summoned = rng.pick(s.roster);
+        s = { ...s, activeBuddy: summoned.buddyId };
+      }
       const { player: newPlayer, broke, daysMissed } = updateStreak(s.player, d);
       let comment: string | undefined;
       let playerAfterGift = newPlayer;
@@ -222,9 +227,11 @@ export function applyEvent(state: GameState, event: PetEvent): ApplyResult {
         }, rng) ?? undefined;
 
         if (comment) {
-          s = { ...s, session: { ...s.session, lastCommentAt: event.at } };
+          s = { ...s, session: { ...s.session, lastCommentAt: event.at, lastComment: comment } };
         }
       }
+
+      s = { ...s, session: { ...s.session, lastTickAt: event.at } };
 
       return { state: s, comment };
     }

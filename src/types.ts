@@ -58,6 +58,8 @@ export interface SessionState {
   sessionSwapCount: number;
   swapDates: Record<string, number>;
   lastCommentAt?: string;
+  lastComment?: string;
+  lastTickAt?: string;
   flowStartAt?: string;
   errorStreakActive: boolean;
   eventIndex: number;

@@ -129,3 +129,25 @@ describe('event replay integration', () => {
     expect(a.player.shardBalance).toBe(b.player.shardBalance);
   });
 });
+
+describe('session_start summon', () => {
+  it('picks an active buddy from the roster on session start', async () => {
+    const { BUDDIES_BY_ID } = await import('../data/buddies.js');
+    const { createInitialBuddyState } = await import('../src/state.js');
+    let state = createInitialState('glitchlet', '2024-06-01T09:00:00Z');
+    // Add more buddies so the summon has choices
+    for (const id of ['compilot', 'nullpup', 'asyncwing']) {
+      state = { ...state, roster: [...state.roster, createInitialBuddyState(BUDDIES_BY_ID[id]!)] };
+    }
+    const { state: after } = applyEvent(state, { type: 'session_start', at: '2024-06-02T09:00:00Z', firstOfDay: true });
+    // Active buddy must be one of the roster members
+    expect(after.roster.map((b) => b.buddyId)).toContain(after.activeBuddy);
+  });
+
+  it('summon is deterministic for a given state + timestamp', () => {
+    const base = createInitialState('glitchlet', '2024-06-01T09:00:00Z');
+    const a = applyEvent(base, { type: 'session_start', at: '2024-06-02T09:00:00Z', firstOfDay: true });
+    const b = applyEvent(base, { type: 'session_start', at: '2024-06-02T09:00:00Z', firstOfDay: true });
+    expect(a.state.activeBuddy).toBe(b.state.activeBuddy);
+  });
+});
