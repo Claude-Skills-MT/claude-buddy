@@ -1,63 +1,67 @@
-#!/usr/bin/env node
-// Pocket Pet SessionStart hook — summons a random buddy, runs streak/comeback logic.
-// stdin: Claude Code SessionStart JSON. stdout: JSON with a systemMessage (the summon line).
+'use strict';
+// Pocket Pet SessionStart hook — zero external dependencies for the common path.
+const fs   = require('fs');
+const path = require('path');
+const os   = require('os');
 
 const STARTERS = [
-  { id: 'nullpup',  label: 'Nullpup',  blurb: '"everything is fine. it\'s not."' },
-  { id: 'byteling', label: 'Byteling', blurb: '"doesn\'t explain itself. doesn\'t need to."' },
-  { id: 'pingling', label: 'Pingling', blurb: '"what does THAT do? and THAT? what about THIS?"' },
+  { id: 'nullpup',  label: 'Nullpup',  trait: 'Sarcastic', personality: 'Aloof',       desc: 'cool, distant, and devastatingly sarcastic', blurb: '"everything is fine. it\'s not."' },
+  { id: 'byteling', label: 'Byteling', trait: 'Gruff',     personality: 'Stubborn',    desc: 'as stubborn as they come',                   blurb: '"doesn\'t explain itself. doesn\'t need to."' },
+  { id: 'pingling', label: 'Pingling', trait: 'Curious',   personality: 'Mischievous', desc: 'a playful little gremlin',                   blurb: '"what does THAT do? and THAT? what about THIS?"' },
 ];
 
-async function readStdin() {
-  if (process.stdin.isTTY) return '';
-  let data = '';
-  for await (const chunk of process.stdin) data += chunk;
-  return data;
+function statePath() {
+  return process.env.CLAUDE_BUDDY_STATE || path.join(os.homedir(), '.claude-buddy', 'state.json');
 }
 
+function loadRaw() {
+  try { return JSON.parse(fs.readFileSync(statePath(), 'utf8')); }
+  catch { return null; }
+}
+
+function starterMenu() {
+  const lines = ['🐾 No buddy yet. Choose your starter:\n'];
+  STARTERS.forEach((s, i) => {
+    lines.push(`  ${i + 1}.  ${s.label.padEnd(12)} · ${s.trait.padEnd(14)} · ${s.personality} — ${s.desc}`);
+    lines.push(`       ${s.blurb}`);
+  });
+  lines.push('\nRun in your terminal:  npm run pocket-pet -- choose 1   (or 2, or 3)');
+  return lines.join('\n');
+}
+
+function out(obj) { process.stdout.write(JSON.stringify(obj)); }
+
 async function main() {
-  // Dynamic imports so a missing/stale dist produces a helpful message instead of a crash.
-  const { loadState, saveState } = await import('../dist/src/persistence.js');
-  const { applyEvent } = await import('../dist/src/engine/events.js');
-  const { render } = await import('../dist/src/render.js');
-  const { rollPersonalityForId, archetypeName, archetypeDescriptor } = await import('../dist/src/engine/personality.js');
-  const { BUDDIES_BY_ID } = await import('../dist/data/buddies.js');
+  const raw = loadRaw();
 
-  const now = new Date().toISOString();
-  const today = now.slice(0, 10);
-  let state = loadState();
-
-  // No buddy chosen yet — show the starter menu.
-  if (!state.activeBuddy || state.roster.length === 0) {
-    const lines = ['🐾 No buddy yet. Choose your starter:\n'];
-    STARTERS.forEach((s, i) => {
-      const { personality } = rollPersonalityForId(s.id);
-      const def = BUDDIES_BY_ID[s.id];
-      const trait = def?.traitPrimary ?? '?';
-      lines.push(`  ${i + 1}.  ${s.label.padEnd(12)} · ${trait.padEnd(14)} · ${archetypeName(personality)} — ${archetypeDescriptor(personality)}`);
-      lines.push(`       ${s.blurb}`);
-    });
-    lines.push('\nRun in your terminal:  npm run pocket-pet -- choose 1   (or 2, or 3)');
-    process.stdout.write(JSON.stringify({ systemMessage: lines.join('\n'), suppressOutput: true }));
+  // No state file, or no buddy chosen yet — show starter menu. No dist needed.
+  if (!raw || !raw.activeBuddy || !Array.isArray(raw.roster) || raw.roster.length === 0) {
+    out({ systemMessage: starterMenu(), suppressOutput: true });
     return;
   }
 
-  const firstOfDay = state.player.lastSessionDate !== today;
-  const result = applyEvent(state, { type: 'session_start', at: now, firstOfDay });
-  state = result.state;
-  saveState(state);
+  // Has a buddy — delegate to the engine (needs dist/).
+  try {
+    const { loadState, saveState } = await import('../dist/src/persistence.js');
+    const { applyEvent }           = await import('../dist/src/engine/events.js');
+    const { render }               = await import('../dist/src/render.js');
 
-  const summon = render(state);
-  const parts = [`🐾 ${summon}`];
-  if (result.comment) parts.push(`"${result.comment}"`);
+    const now     = new Date().toISOString();
+    const today   = now.slice(0, 10);
+    let   state   = loadState();
+    const firstOfDay = state.player.lastSessionDate !== today;
+    const result  = applyEvent(state, { type: 'session_start', at: now, firstOfDay });
+    saveState(result.state);
 
-  process.stdout.write(JSON.stringify({ systemMessage: parts.join('  '), suppressOutput: true }));
+    const parts = [`🐾 ${render(result.state)}`];
+    if (result.comment) parts.push(`"${result.comment}"`);
+    out({ systemMessage: parts.join('  '), suppressOutput: true });
+  } catch {
+    // dist/ missing or stale — show buddy name without engine processing.
+    const buddy = raw.roster.find(b => b.buddyId === raw.activeBuddy);
+    const name  = buddy?.nickname || buddy?.currentForm || raw.activeBuddy;
+    out({ systemMessage: `🐾 ${name} is here. (run: npm run install-pet to rebuild)`, suppressOutput: true });
+  }
 }
 
-main().catch((e) => {
-  const msg = e?.message?.split('\n')[0] ?? String(e);
-  process.stdout.write(JSON.stringify({
-    systemMessage: `🐾 Pocket Pet needs a rebuild — run: npm run install-pet\n(${msg})`,
-    suppressOutput: true,
-  }));
-});
+main().catch(() => out({}));
