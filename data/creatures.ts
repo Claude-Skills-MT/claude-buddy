@@ -19,29 +19,49 @@ export const MOOD_FACE: Record<string, string> = {
 };
 
 // ── archetypes ──────────────────────────────────────────────────────────────
+//
+//  Each archetype is 3 lines.  Rendered width should be ~7 chars so the stats
+//  column to the right stays consistently positioned.
+//
+//  Cheat-sheet of rendered output (face = ^-^):
+//
+//  CAT       RABBIT     GHOST      DUCK       ROBOT
+//   /\_/\    |\  /|    .-----.    .---.     .-----.
+//  ( ^-^ )   ({^-^})  ( ^-^ )   <({^-^})   |[^-^]|
+//  (u   u)   ( ~ )    '~~~~~'     ~  ~      |_____|
+//
+//  OWL       SNAIL      CAPYBARA   PENGUIN    BEAR
+//  /^   ^\    ___       n~~~~~n    (  ^  )   (\   /)
+//  ( ^-^ )  ~({^-^})  ( ^-^ )    ( ^-^ )    ({^-^})
+//   (,^,)    '-----'  (_____,)    /(_)_\     (_____)
+//
+//  DRAGON    FOX        BLOB       MUSHROOM   AXOLOTL
+//  /\  /\   /\    /\    .---.     ( ~~~ )    *\  /*
+// <({^-^})  ({^-^})    ({^-^})    ({^-^})    ({^-^})
+//  \/~~\/    ~~~~       `---`      | || |    ~~(  )~~
 
 const CAT: CreatureDef = {
   top: ' /\\_/\\ ',
   mid: '( {f} )',
-  bot: '  > <  ',
+  bot: '(u   u)',
 };
 
 const RABBIT: CreatureDef = {
-  top: '(\\ .. /)',
-  mid: ' ( {f}) ',
-  bot: '  (uu)  ',
+  top: '|\\   /|',
+  mid: '( {f} )',
+  bot: ' ( ~ ) ',
 };
 
 const GHOST: CreatureDef = {
-  top: ' .---. ',
+  top: ' .----.',
   mid: '( {f} )',
-  bot: '/|~~~| ',
+  bot: " '~~~~'",
 };
 
 const DUCK: CreatureDef = {
-  top: '   _   ',
+  top: '  .--. ',
   mid: '<( {f})',
-  bot: "  ' '  ",
+  bot: '  ~~~  ',
 };
 
 const ROBOT: CreatureDef = {
@@ -51,63 +71,63 @@ const ROBOT: CreatureDef = {
 };
 
 const OWL: CreatureDef = {
-  top: '/^,·,^\\',
+  top: '/^   ^\\',
   mid: '( {f} )',
-  bot: '  =w=  ',
+  bot: ' (,^,) ',
 };
 
 const SNAIL: CreatureDef = {
-  top: '   __  ',
+  top: '  ___  ',
   mid: '~( {f})',
   bot: " '----'",
 };
 
 const CAPYBARA: CreatureDef = {
-  top: 'n_____n',
+  top: 'n~~~~~n',
   mid: '( {f} )',
   bot: '(_____)' ,
 };
 
 const PENGUIN: CreatureDef = {
-  top: ' (___) ',
+  top: ' (   ) ',
   mid: '( {f} )',
-  bot: ' /. .\\ ',
+  bot: ' /(_)\\ ',
 };
 
 const BEAR: CreatureDef = {
-  top: '(\\(·)/)',
-  mid: ' ({f}) ',
-  bot: ' (___) ',
+  top: '(\\   /)',
+  mid: '( {f} )',
+  bot: '(_____)' ,
 };
 
 const DRAGON: CreatureDef = {
-  top: '/\\~/\\/',
-  mid: ' ({f}) ',
-  bot: '\\/,~,\\/',
+  top: ' /\\ /\\ ',
+  mid: '( {f} )',
+  bot: ' \\/\\/ ',
 };
 
 const FOX: CreatureDef = {
-  top: '/\\ /\\/',
-  mid: '( {f})',
-  bot: ' ~~~~ ',
+  top: '/\\  /\\ ',
+  mid: '( {f} )',
+  bot: ' ~~~~  ',
 };
 
 const BLOB: CreatureDef = {
-  top: '  .--. ',
-  mid: ' ({f}) ',
-  bot: '  `--` ',
+  top: '  .---.',
+  mid: '( {f} )',
+  bot: "  '---'",
 };
 
 const MUSHROOM: CreatureDef = {
-  top: '(~~~~~)',
-  mid: ' ({f}) ',
+  top: '( ~~~ )',
+  mid: '( {f} )',
   bot: '  | |  ',
 };
 
 const AXOLOTL: CreatureDef = {
-  top: '*\\  /*',
-  mid: ' ({f})',
-  bot: '~~()~~',
+  top: ' *\\  /* ',
+  mid: ' ( {f}) ',
+  bot: '~~(  )~~',
 };
 
 const DEFAULT_CREATURE: CreatureDef = BLOB;
