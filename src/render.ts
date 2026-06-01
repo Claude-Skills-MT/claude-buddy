@@ -45,9 +45,13 @@ export function render(state: GameState, comment?: string): string {
       ? ' · 🍖'
       : '';
 
-  const line1 = `${art0}  ${rarityIcon} ${name} ${level} · ${moodIcon} · ${bond}`;
-  const line2 = `${art1}  ${xp}✨ · ${shards}💎${hungry}${streak}`;
-  const line3 = comment ? `${art2}  "${comment}"` : art2;
+  // Pad all art lines to the same width so the stats column stays aligned.
+  const artWidth = Math.max(art0.length, art1.length, art2.length);
+  const pad = (s: string) => s.padEnd(artWidth);
+
+  const line1 = `${pad(art0)}  ${rarityIcon} ${name} ${level} · ${moodIcon} · ${bond}`;
+  const line2 = `${pad(art1)}  ${xp}✨ · ${shards}💎${hungry}${streak}`;
+  const line3 = comment ? `${pad(art2)}  "${comment}"` : art2;
 
   return [line1, line2, line3].join('\n');
 }
