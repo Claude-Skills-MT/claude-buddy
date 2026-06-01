@@ -8,94 +8,104 @@ export interface CreatureDef {
   bot: string;
 }
 
+// ── mood faces ───────────────────────────────────────────────────────────────
+//
+//  3 chars: left-eye + nose/mouth + right-eye (or mouth in centre).
+//  Eyes tell the story: o = round/alert, ^ = happy-squint, - = flat/sleepy,
+//  = = half-lidded, > = angry-squint, T = tear-drip.
+//
+//  bored     curious   engaged   excited   over      tired     sulking   betrayed
+//  -_-       o.o       ^‿^       ♥v♥       OAO       =_=       >_<       T_T
+
 export const MOOD_FACE: Record<string, string> = {
-  bored:          '·_·',
-  curious:        '·o·',
-  engaged:        '^-^',
-  excited:        '^v^',
-  overstimulated: '@o@',
-  tired:          '-_-',
-  sulking:        '>.<',
-  betrayed:       'ToT',
+  bored:          '-_-',   // flat deadpan eyes
+  curious:        'o.o',   // wide open eyes, dot nose
+  engaged:        '^‿^',   // happy-squint + curved smile  (U+203F undertie)
+  excited:        '♥v♥',   // heart eyes + V-mouth
+  overstimulated: 'OAO',   // huge shocked eyes
+  tired:          '=_=',   // half-lidded sleepy eyes
+  sulking:        '>_<',   // angry squint
+  betrayed:       'T_T',   // tear-drip eyes
 };
 
 // ── archetypes ──────────────────────────────────────────────────────────────
 //
-//  Rendered previews (face = ^-^):
+//  Bodies are kept intentionally simple so the face (mood) stays the focal
+//  point. Only the top silhouette & bottom hint at the species.
 //
-//  CAT           RABBIT        GHOST         DUCK          ROBOT
-//   /\_/\         (\_/)        ,------,        ___         .[||].
-//  ( ^-^ )       ( ^-^ )      | ^-^  |      <( ^-^ )      |[^-^]|
-//  ("")_("")     =("")=        ~·~  ~·~        ·->         | === |
+//  CAT        RABBIT     GHOST      DUCK       ROBOT
+//   /\_/\      /\ /\     .-----.     ___       .[||].
+//  ( -_- )    ( -_- )   | -_-  |  <( -_- )    |[-_-]|
+//   ~ ~         v         '~~~'      ~~~        |___|
 //
-//  OWL           SNAIL         CAPYBARA      PENGUIN       BEAR
-//  /\    /\       ,___.        n~~~~~~n       (   )        (\   /)
-//  ( ^-^  )      \({^-^})     ( ^-^  )      ({^-^}·>)    ( ^-^ )
-//   >---<         ~\/~~~      (__oo__)        /(___)\      (_____)
+//  OWL        SNAIL      CAPYBARA   PENGUIN    BEAR
+//  /^   ^\     ,___.     n~~~~n      (   )     (\   /)
+//  ( -_- )    \(-_-)    ( -_- )    (-_-·>)    ( -_- )
+//   (,^,)      ~\/~     (__o__)    /(___)\     (___)
 //
-//  DRAGON        FOX           BLOB          MUSHROOM      AXOLOTL
-//  /^\  /^\      /\   /\       .------.      .-o-OO-o-.   }~(-----)~{
-//  <( ^-^ )>    ( ^-^ )       ( ^-^  )      ( ^-^    )   }~( ^-^ )~{
-//  -vVVV-        ~~~~~          `------`       |   |       (_/   \_)
+//  DRAGON     FOX        BLOB       MUSHROOM   AXOLOTL
+//  /^\  /^\   /\   /\    .-----.   .-o-OO-o.  }~(---)~{
+//  <(-_-)>   ( -_- )    ( -_-  )  ( -_-   )  }~(-_-)~{
+//  -vVVV-     ~~~~~      `~~~~~'     |   |     (_/ \_)
 
 const CAT: CreatureDef = {
   top: ' /\\_/\\ ',
   mid: '( {f} )',
-  bot: '("")_("")',
+  bot: '  ~ ~  ',
 };
 
 const RABBIT: CreatureDef = {
-  top: ' (\\_/)  ',
+  top: ' /\\ /\\ ',
   mid: '( {f} )',
-  bot: '=("")=  ',
+  bot: '   v   ',
 };
 
 const GHOST: CreatureDef = {
-  top: ',------,',
+  top: ' .-----.',
   mid: '| {f}  |',
-  bot: '~·~  ~·~',
+  bot: " '~~~~~'",
 };
 
 const DUCK: CreatureDef = {
   top: '   ___  ',
   mid: '<( {f} )',
-  bot: "   ·->  ",
+  bot: '   ~~~  ',
 };
 
 const ROBOT: CreatureDef = {
   top: ' .[||]. ',
   mid: '|[{f}]| ',
-  bot: '| === | ',
+  bot: ' |___| ',
 };
 
 const OWL: CreatureDef = {
-  top: '/\\    /\\',
-  mid: '( {f}  )',
-  bot: ' >---< ',
+  top: '/^   ^\\',
+  mid: '( {f} )',
+  bot: ' (,^,) ',
 };
 
 const SNAIL: CreatureDef = {
   top: ' ,___. ',
-  mid: '\\({f})',
-  bot: '~\\/~~~',
+  mid: '\\( {f})',
+  bot: ' ~\\/~ ',
 };
 
 const CAPYBARA: CreatureDef = {
-  top: 'n~~~~~~n',
-  mid: '( {f}  )',
-  bot: '(__oo__)',
+  top: 'n~~~~n ',
+  mid: '( {f} )',
+  bot: '(__o__)',
 };
 
 const PENGUIN: CreatureDef = {
   top: '  (   )  ',
-  mid: ' ({f}·>) ',
+  mid: '( {f}·>) ',
   bot: ' /(___)\\ ',
 };
 
 const BEAR: CreatureDef = {
   top: '(\\   /)',
   mid: '( {f} )',
-  bot: '(_____)',
+  bot: ' (___)  ',
 };
 
 const DRAGON: CreatureDef = {
@@ -113,19 +123,19 @@ const FOX: CreatureDef = {
 const BLOB: CreatureDef = {
   top: ' .-----.',
   mid: '( {f}  )',
-  bot: " `-----'",
+  bot: " `~~~~~'",
 };
 
 const MUSHROOM: CreatureDef = {
-  top: '.-o-OO-o-.',
-  mid: '( {f}    )',
-  bot: '   |   |  ',
+  top: '.-o-OO-o.',
+  mid: '( {f}   )',
+  bot: '  |   |  ',
 };
 
 const AXOLOTL: CreatureDef = {
-  top: '}~(-----)~{',
-  mid: '}~( {f} )~{',
-  bot: ' (_/   \\_) ',
+  top: '}~(---)~{',
+  mid: '}~({f})~{',
+  bot: '(_/  \\_)',
 };
 
 const DEFAULT_CREATURE: CreatureDef = BLOB;
