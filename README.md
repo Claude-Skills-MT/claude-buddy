@@ -34,12 +34,17 @@ points:
 ## Install
 
 Requires Node 18+. Installs into `~/.claude/settings.json` (your existing settings
-are backed up and preserved) and adds a `/pocket-pet` skill to `~/.claude/skills`:
+are backed up and preserved):
 
 ```bash
 npm install
-npm run install-pet      # builds, wires up status line + hooks, installs the skill
+npm run install-pet      # builds, wires up the status line + hooks
 ```
+
+> **⚠️ Never use a `/pocket-pet` slash command.** Slash commands route through the
+> LLM and **cost tokens** — the opposite of this project's whole point. There is
+> no skill. Every command below is a plain terminal command that runs zero tokens.
+> The installer actively deletes any stale `/pocket-pet` skill left by older builds.
 
 ### First-time setup: choose your starter
 

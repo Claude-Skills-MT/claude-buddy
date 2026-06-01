@@ -86,6 +86,16 @@ function install() {
 
   save(s);
 
+  // A slash-command skill routes through the LLM and costs tokens — the exact
+  // opposite of this project's zero-token promise. Older installs shipped one;
+  // delete it so /pocket-pet can never silently burn tokens again.
+  try {
+    if (existsSync(SKILLS_DIR)) {
+      rmSync(SKILLS_DIR, { recursive: true, force: true });
+      console.log('Removed a stale /pocket-pet skill (skills cost tokens — this pet is zero-token).');
+    }
+  } catch { /* nothing to clean */ }
+
   console.log(`\n🐾 Pocket Pet installed into ${SETTINGS}`);
   console.log('\nPick your starter (run once in a terminal — zero tokens):');
   console.log(`\n  node ${cli} choose`);
