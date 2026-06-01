@@ -1,0 +1,25 @@
+import type { CommentEntry } from './index.js';
+
+export const buildSuccessPool: CommentEntry[] = [
+  { text: "hm. it built." },
+  { text: "don't get used to it." },
+  { text: "I'll believe it when the tests pass." },
+  { text: "clean build. I'm almost impressed." },
+  { text: "it compiled. wild." },
+  { text: "okay that one actually worked." },
+  { text: "build success. noted. suspiciously." },
+  { text: "took you long enough. but sure, celebrate." },
+  { text: "and it only took... checks notes... that many tries." },
+  { text: "the compiler agreed. this time." },
+  { text: "I saw the error count go to zero. felt weird." },
+  { text: "clean. I hate how satisfying that is." },
+  { text: "your code compiled. I'm going to stay quiet and not jinx it." },
+  { text: "build passing. deploy not my problem.", trait: ['Blunt'] },
+  { text: "nice. when does it break in prod?", trait: ['Nihilistic'] },
+  { text: "excellent. the machine obeys.", trait: ['Authoritative'] },
+  { text: "I KNEW YOU COULD DO IT!!", trait: ['Chaotic'] },
+  { text: "structurally sound. for now.", trait: ['Stoic'] },
+  { text: "one clean build doesn't fix the underlying problems. but it's a start.", trait: ['Nurturing'] },
+  { text: "there are 3 things I trust: gravity, entropy, and a successful build. two of those betray you eventually.", rarity: ['epic', 'legendary'] },
+  { text: "the build server and I were both holding our breath.", rarity: ['legendary'] },
+];

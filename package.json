@@ -1,0 +1,23 @@
+{
+  "name": "claude-buddy",
+  "version": "0.1.0",
+  "description": "Pocket Pet — a zero-token companion that lives next to your Claude Code session",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "pocket-pet": "node bin/pocket-pet.mjs",
+    "install-pet": "npm run build && node bin/install.mjs",
+    "uninstall-pet": "node bin/install.mjs --uninstall"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
