@@ -1,6 +1,6 @@
 import type { GameState } from './types.js';
 import { hearts, hungerTier } from './engine/attachment.js';
-import { CREATURE_BY_ID, DEFAULT_CREATURE, MOOD_FACE } from '../data/creatures.js';
+import { creatureFor, MOOD_FACE } from '../data/creatures.js';
 
 const MOOD_EMOJI: Record<string, string> = {
   bored: '😑',
@@ -25,7 +25,7 @@ export function render(state: GameState, comment?: string): string {
   const buddy = state.roster.find((b) => b.buddyId === state.activeBuddy);
   if (!buddy) return '[ no buddy ]';
 
-  const def = CREATURE_BY_ID[buddy.buddyId] ?? DEFAULT_CREATURE;
+  const def = creatureFor(buddy.buddyId, buddy.evolutionStage);
   const face = MOOD_FACE[buddy.mood] ?? '·_·';
   const art0 = def.top;
   const art1 = def.mid.replace('{f}', face);

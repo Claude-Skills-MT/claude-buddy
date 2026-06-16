@@ -1,7 +1,7 @@
-// Kaomoji-style ASCII art for each buddy species.
+// Kaomoji-style ASCII art for each buddy species, one CreatureDef per evolution form.
 // {f} in `mid` is replaced at render time with a 3-char mood face.
 // Line widths within a creature don't have to match — render.ts pads to max.
-// Every buddy has its OWN unique CreatureDef — no sharing.
+// Every buddy has its OWN unique array of forms, indexed by evolutionStage.
 
 export interface CreatureDef {
   top: string;
@@ -12,447 +12,528 @@ export interface CreatureDef {
 // ── mood faces ───────────────────────────────────────────────────────────────
 //
 //  3 chars: left-eye + nose/mouth + right-eye (or mouth in centre).
-//  Eyes tell the story: o = round/alert, ^ = happy-squint, - = flat/sleepy,
-//  = = half-lidded, > = angry-squint, T = tear-drip.
 //
 //  bored     curious   engaged   excited   over      tired     sulking   betrayed
 //  -_-       o.o       ^‿^       ♥v♥       OAO       =_=       >_<       T_T
 
 export const MOOD_FACE: Record<string, string> = {
-  bored:          '-_-',   // flat deadpan eyes
-  curious:        'o.o',   // wide open eyes, dot nose
-  engaged:        '^‿^',   // happy-squint + curved smile  (U+203F undertie)
-  excited:        '♥v♥',   // heart eyes + V-mouth
-  overstimulated: 'OAO',   // huge shocked eyes
-  tired:          '=_=',   // half-lidded sleepy eyes
-  sulking:        '>_<',   // angry squint
-  betrayed:       'T_T',   // tear-drip eyes
+  bored:          '-_-',
+  curious:        'o.o',
+  engaged:        '^‿^',
+  excited:        '♥v♥',
+  overstimulated: 'OAO',
+  tired:          '=_=',
+  sulking:        '>_<',
+  betrayed:       'T_T',
 };
 
-// ── Common (15) ──────────────────────────────────────────────────────────────
+// ── Common (15) — 3 stages each ──────────────────────────────────────────────
 
-// nullpup — ghost puppy/dog  (floppy ears, ghost tail)
-export const NULLPUP: CreatureDef = {
-  top: ' /\\_/\\ ',
-  mid: '( {f} )',
-  bot: '  u u  ',
-};
+const GLITCHLET_FORMS: CreatureDef[] = [
+  // 0 Glitchlet — glitchy ghost
+  { top: '.=|=|=.', mid: '| {f}  |', bot: " '~|~|~'" },
+  // 1 Glitchin — taller, more artifacts, jagged crown
+  { top: '|=|=|=|=|', mid: '|≋ {f} ≋|', bot: " '~|~|~|~'" },
+  // 2 Glitchara — towering glitch-storm, shards everywhere
+  { top: '≋|=|=|=|≋', mid: '≋[ {f} ]≋', bot: "  ~|≋|≋|~  " },
+];
 
-// glitchlet — glitchy ghost  (jagged top, glitch artifacts)
-export const GLITCHLET: CreatureDef = {
-  top: '.=|=|=.',
-  mid: '| {f}  |',
-  bot: " '~|~|~'",
-};
+const LOOPUP_FORMS: CreatureDef[] = [
+  // 0 Loopup — loop snail
+  { top: ' ,@@@. ', mid: '\\( {f})', bot: ' ~\\o~ ' },
+  // 1 Loopex — bigger shell, twin antennae
+  { top: ' ,@@@@@. ', mid: '\\\\( {f} )', bot: ' ~\\oo~ ' },
+  // 2 Looprime — massive spiral shell, looping aura
+  { top: '↺,@@@@@,↺', mid: '↺\\( {f} )↺', bot: ' ~\\oOo~ ' },
+];
 
-// loopup — loop snail  (round shell, curled antenna)
-export const LOOPUP: CreatureDef = {
-  top: ' ,@@@. ',
-  mid: '\\( {f})',
-  bot: ' ~\\o~ ',
-};
+const NULLPUP_FORMS: CreatureDef[] = [
+  // 0 Nullpup — ghost puppy
+  { top: ' /\\_/\\ ', mid: '( {f} )', bot: '  u u  ' },
+  // 1 Nullfang — bigger, bared fangs
+  { top: ' /\\_/\\ ', mid: '( {f} )', bot: ' \\WvW/ ' },
+  // 2 Nullvex — hulking void-hound, fanged maw + aura
+  { top: '/\\__/\\__', mid: '§( {f} )§', bot: ' \\WVWvW/ ' },
+];
 
-// byteling — binary duck  (01 on forehead, bill)
-export const BYTELING: CreatureDef = {
-  top: ' _01_  ',
-  mid: '<( {f} )',
-  bot: '  ~~~  ',
-};
+const BYTELING_FORMS: CreatureDef[] = [
+  // 0 Byteling — binary duck
+  { top: ' _01_  ', mid: '<( {f} )', bot: '  ~~~  ' },
+  // 1 Bytewulf — bytes spread, sharper bill, wolfish
+  { top: '_0110_  ', mid: '<<( {f} )', bot: ' /~~~\\ ' },
+  // 2 Bytestorm — data-storm beast, crackling
+  { top: '01·≋·10', mid: '<<§( {f} )§', bot: ' /≋~~≋\\ ' },
+];
 
-// stackit — stack robot  (stacked plates on top, boxy)
-export const STACKIT: CreatureDef = {
-  top: '=[=|=]=',
-  mid: '|[{f}]|',
-  bot: ' |___| ',
-};
+const STACKIT_FORMS: CreatureDef[] = [
+  // 0 Stackit — stack robot
+  { top: '=[=|=]=', mid: '|[{f}]|', bot: ' |___| ' },
+  // 1 Stackor — taller stack, double plating
+  { top: '=[=|=|=]=', mid: '|[ {f} ]|', bot: '|[=|=]| ' },
+  // 2 Stackrux — towering stack-mech, antenna
+  { top: '★=[=|=|=]=★', mid: '|[[ {f} ]]|', bot: '|[=|=|=]|' },
+];
 
-// pingling — ping blob  (round, signal ripple on top)
-export const PINGLING: CreatureDef = {
-  top: ' .~~~. ',
-  mid: '( {f}  )',
-  bot: " `·····'",
-};
+const PINGLING_FORMS: CreatureDef[] = [
+  // 0 Pingling — ping blob
+  { top: ' .~~~. ', mid: '( {f}  )', bot: " `·····'" },
+  // 1 Pingsor — wider ripple aura
+  { top: '.~≈~≈~. ', mid: '(( {f} ))', bot: " `··•··'" },
+  // 2 Pingmoth — moth wings of signal ripples
+  { top: '≈.~≈~≈~.≈', mid: '≈(( {f} ))≈', bot: " `·•·•·•·'" },
+];
 
-// tabbit — tab rabbit  (tab-key ears >>)
-export const TABBIT: CreatureDef = {
-  top: ' >> >> ',
-  mid: '( {f} )',
-  bot: '   v   ',
-};
+const TABBIT_FORMS: CreatureDef[] = [
+  // 0 Tabbit — tab rabbit
+  { top: ' >> >> ', mid: '( {f} )', bot: '   v   ' },
+  // 1 Tabbex — taller ears, leaner
+  { top: '>>> >>> ', mid: '(( {f} ))', bot: '  \\v/  ' },
+  // 2 Tabberon — towering rabbit-buck, long ears
+  { top: '>>>> >>>>', mid: '((§ {f} §))', bot: '  \\vWv/  ' },
+];
 
-// scopin — scope owl  (curvy tufts, brow arches)
-export const SCOPIN: CreatureDef = {
-  top: '/^   ^\\',
-  mid: '( {f} )',
-  bot: ' (,v,) ',
-};
+const SCOPIN_FORMS: CreatureDef[] = [
+  // 0 Scopin — scope owl
+  { top: '/^   ^\\', mid: '( {f} )', bot: ' (,v,) ' },
+  // 1 Scopara — bigger brow tufts, spread wings
+  { top: '/^^ ^^\\', mid: '(( {f} ))', bot: ' (,vWv,)' },
+  // 2 Scopinth — grand owl, full wings + crest
+  { top: '╱/^^ ^^\\╲', mid: '((§ {f} §))', bot: '(,vWvWv,)' },
+];
 
-// craslet — crash blob  (cracked top, X mark)
-export const CRASLET: CreatureDef = {
-  top: ' .x-x. ',
-  mid: '( {f}  )',
-  bot: " `/////'",
-};
+const CRASLET_FORMS: CreatureDef[] = [
+  // 0 Craslet — crash blob
+  { top: ' .x-x. ', mid: '( {f}  )', bot: " `/////'" },
+  // 1 Crashor — cracked wide, jagged shards
+  { top: '.x-x-x. ', mid: '(( {f} ))', bot: " `//\\//'" },
+  // 2 Crashveil — shattered ethereal mass
+  { top: 'x.≋x-x≋.x', mid: '((§ {f} §))', bot: " `/≋\\/≋/'" },
+];
 
-// boolup — bool mushroom  (T/F split cap)
-export const BOOLUP: CreatureDef = {
-  top: '.T---F.',
-  mid: '( {f}  )',
-  bot: '  | |  ',
-};
+const BOOLUP_FORMS: CreatureDef[] = [
+  // 0 Boolup — bool mushroom
+  { top: '.T---F.', mid: '( {f}  )', bot: '  | |  ' },
+  // 1 Boolara — wider cap, twin stem
+  { top: '.T--^--F.', mid: '(( {f} ))', bot: '  |·|·|  ' },
+  // 2 Boolstrike — battle-mushroom, spore strikes
+  { top: '★.T-^-F.★', mid: '((§ {f} §))', bot: '  \\|VV|/  ' },
+];
 
-// varlet — variable cat  ($ sign ear tufts)
-export const VARLET: CreatureDef = {
-  top: ' $\\_/$ ',
-  mid: '( {f} )',
-  bot: '  ~ ~  ',
-};
+const VARLET_FORMS: CreatureDef[] = [
+  // 0 Varlet — variable cat
+  { top: ' $\\_/$ ', mid: '( {f} )', bot: '  ~ ~  ' },
+  // 1 Varkon — bigger cat, fanged
+  { top: '$\\_ _/$', mid: '(( {f} ))', bot: ' ~W~W~ ' },
+  // 2 Varkonis — regal var-lion, mane
+  { top: '$§\\_ _/§$', mid: '((§ {f} §))', bot: ' ~WvWvW~ ' },
+];
 
-// loglet — log duck  (logfile lines on forehead, bill)
-export const LOGLET: CreatureDef = {
-  top: ' _≡≡_  ',
-  mid: '<( {f} )',
-  bot: '  ~~~  ',
-};
+const LOGLET_FORMS: CreatureDef[] = [
+  // 0 Loglet — log duck
+  { top: ' _≡≡_  ', mid: '<( {f} )', bot: '  ~~~  ' },
+  // 1 Loghorn — log lines + horn
+  { top: '/≡≡≡_  ', mid: '<( {f} )', bot: ' \\~~~/ ' },
+  // 2 Logvast — vast horned log-beast
+  { top: '§/≡≡≡≡\\§', mid: '<<§( {f} )§', bot: ' \\~≋~≋/ ' },
+];
 
-// patchkin — patch snail  (# patch on shell)
-export const PATCHKIN: CreatureDef = {
-  top: ' ,###. ',
-  mid: '\\( {f})',
-  bot: ' ~\\/~ ',
-};
+const PATCHKIN_FORMS: CreatureDef[] = [
+  // 0 Patchkin — patch snail
+  { top: ' ,###. ', mid: '\\( {f})', bot: ' ~\\/~ ' },
+  // 1 Patchor — bigger patched shell
+  { top: ' ,#####. ', mid: '\\\\( {f} )', bot: ' ~\\##/~ ' },
+  // 2 Patchrend — torn jagged shell
+  { top: '#,##≋##,#', mid: '\\\\§( {f} )§', bot: ' ~\\#≋#/~ ' },
+];
 
-// driftin — drift rabbit  (drifting tilted ears)
-export const DRIFTIN: CreatureDef = {
-  top: '/\\  /\\ ',
-  mid: '( {f} )',
-  bot: '  ~v~  ',
-};
+const DRIFTIN_FORMS: CreatureDef[] = [
+  // 0 Driftin — drift rabbit
+  { top: '/\\  /\\ ', mid: '( {f} )', bot: '  ~v~  ' },
+  // 1 Driftex — leaner, drifting trails
+  { top: '/\\∿ ∿/\\', mid: '(( {f} ))', bot: ' ~∿v∿~ ' },
+  // 2 Driftveil — ethereal drift-beast, veil trails
+  { top: '∿/\\∿ ∿/\\∿', mid: '((§ {f} §))', bot: ' ~∿vWv∿~ ' },
+];
 
-// forklet — fork fox  (Y-shaped forked ears)
-export const FORKLET: CreatureDef = {
-  top: 'Y\\   /Y',
-  mid: '( {f} )',
-  bot: ' ~~~~~ ',
-};
+const FORKLET_FORMS: CreatureDef[] = [
+  // 0 Forklet — fork fox
+  { top: 'Y\\   /Y', mid: '( {f} )', bot: ' ~~~~~ ' },
+  // 1 Forksin — sharper forked ears, fangs
+  { top: 'Y\\Y Y/Y', mid: '(( {f} ))', bot: ' ~WvW~ ' },
+  // 2 Forkrune — mystical fork-fox, rune marks
+  { top: '§Y\\Y Y/Y§', mid: '((§ {f} §))', bot: ' ~WvWvW~ ' },
+];
 
-// ── Uncommon (12) ────────────────────────────────────────────────────────────
+// ── Uncommon (12) — 3 stages each ────────────────────────────────────────────
 
-// hexcub — hex bear  (0x on forehead, round ears)
-export const HEXCUB: CreatureDef = {
-  top: '(0x   0x)',
-  mid: '( {f}  )',
-  bot: ' (___) ',
-};
+const HEXCUB_FORMS: CreatureDef[] = [
+  // 0 Hexcub — hex bear
+  { top: '(0x   0x)', mid: '( {f}  )', bot: ' (___) ' },
+  // 1 Hexbear — bigger bear, broader frame
+  { top: '(0x  ~  0x)', mid: '(( {f}  ))', bot: ' (__□__) ' },
+  // 2 Hexlord — regal hex-bear, crown
+  { top: '★(0x ~ 0x)★', mid: '((§ {f} §))', bot: '(_□_□_)' },
+];
 
-// compilot — compiler robot  (|>| arrow panels)
-export const COMPILOT: CreatureDef = {
-  top: '.|>|>|.',
-  mid: '|[{f}]|',
-  bot: ' |=|=| ',
-};
+const COMPILOT_FORMS: CreatureDef[] = [
+  // 0 Compilot — compiler robot
+  { top: '.|>|>|.', mid: '|[{f}]|', bot: ' |=|=| ' },
+  // 1 Compilex — taller frame, more arrows
+  { top: '.|>|>|>|.', mid: '|[ {f} ]|', bot: '|=|==|=|' },
+  // 2 Compilon — towering compile-mech, antenna
+  { top: '★|>|>|>|★', mid: '|[[ {f} ]]|', bot: '|=|=||=|=|' },
+];
 
-// mergekit — merge fox  (← → merge arrows as ears)
-export const MERGEKIT: CreatureDef = {
-  top: '←\\   /→',
-  mid: '( {f} )',
-  bot: ' ~~≈~~ ',
-};
+const MERGEKIT_FORMS: CreatureDef[] = [
+  // 0 Mergekit — merge fox
+  { top: '←\\   /→', mid: '( {f} )', bot: ' ~~≈~~ ' },
+  // 1 Mergehorn — merge fox + horns
+  { top: '←\\§ §/→', mid: '(( {f} ))', bot: ' ~≈W≈~ ' },
+  // 2 Mergevast — vast merge-beast, broad aura
+  { top: '≋←\\§ §/→≋', mid: '((§ {f} §))', bot: ' ~≈WvW≈~ ' },
+];
 
-// cachekin — cache capybara  ([] slot brackets on head)
-export const CACHEKIN: CreatureDef = {
-  top: 'n[~~]n ',
-  mid: '( {f} )',
-  bot: '(__□__)',
-};
+const CACHEKIN_FORMS: CreatureDef[] = [
+  // 0 Cachekin — cache capybara
+  { top: 'n[~~]n ', mid: '( {f} )', bot: '(__□__)' },
+  // 1 Cachorn — capybara + horn slots
+  { top: 'n[~§~]n ', mid: '(( {f} ))', bot: '(_□_□_)' },
+  // 2 Cacheveil — vast cache-beast, layered slots
+  { top: '≋n[~§~]n≋', mid: '((§ {f} §))', bot: '(_□□□□_)' },
+];
 
-// threadlet — thread snail  (=== thread lines on shell)
-export const THREADLET: CreatureDef = {
-  top: ' ,===. ',
-  mid: '\\( {f})',
-  bot: ' ~===~ ',
-};
+const THREADLET_FORMS: CreatureDef[] = [
+  // 0 Threadlet — thread snail
+  { top: ' ,===. ', mid: '\\( {f})', bot: ' ~===~ ' },
+  // 1 Threadex — woven shell, twin antennae
+  { top: ' ,=====. ', mid: '\\\\( {f} )', bot: ' ~==·==~ ' },
+  // 2 Threadrend — torn thread-mass, jagged
+  { top: '=,==≋==,=', mid: '\\\\§( {f} )§', bot: ' ~=≋=≋=~ ' },
+];
 
-// parsekin — parse owl  (<> tag tufts)
-export const PARSEKIN: CreatureDef = {
-  top: '/<>  <>\\',
-  mid: '( {f} )',
-  bot: ' (,^,) ',
-};
+const PARSEKIN_FORMS: CreatureDef[] = [
+  // 0 Parsekin — parse owl
+  { top: '/<>  <>\\', mid: '( {f} )', bot: ' (,^,) ' },
+  // 1 Parseron — bigger owl, spread wings
+  { top: '/<><> <><>\\', mid: '(( {f} ))', bot: ' (,^W^,) ' },
+  // 2 Parserune — mystical owl, rune crest
+  { top: '§/<><> <><>\\§', mid: '((§ {f} §))', bot: '(,^WvW^,)' },
+];
 
-// buildur — build robot  (# hash crown, heavy frame)
-export const BUILDUR: CreatureDef = {
-  top: ' #[##]# ',
-  mid: '|[{f}]|',
-  bot: ' |###| ',
-};
+const BUILDUR_FORMS: CreatureDef[] = [
+  // 0 Buildur — build robot
+  { top: ' #[##]# ', mid: '|[{f}]|', bot: ' |###| ' },
+  // 1 Buildrak — heavier crane frame
+  { top: '#[####]# ', mid: '|[ {f} ]|', bot: '|#|##|#|' },
+  // 2 Buildrex — colossal build-mech, T-crane
+  { top: '★#[####]#★', mid: '|[[ {f} ]]|', bot: '|#|####|#|' },
+];
 
-// hooklet — hook owl  (J-shaped hook ear tufts)
-export const HOOKLET: CreatureDef = {
-  top: 'J^   ^J',
-  mid: '( {f} )',
-  bot: ' (,J,) ',
-};
+const HOOKLET_FORMS: CreatureDef[] = [
+  // 0 Hooklet — hook owl
+  { top: 'J^   ^J', mid: '( {f} )', bot: ' (,J,) ' },
+  // 1 Hookvex — sharper hook tufts, fangs
+  { top: 'J^J J^J', mid: '(( {f} ))', bot: ' (,JWJ,) ' },
+  // 2 Hookvast — vast hook-beast, wide wings
+  { top: '≋J^J J^J≋', mid: '((§ {f} §))', bot: '(,JWvWJ,)' },
+];
 
-// queuepup — queue penguin  ([ ] bracket sides)
-export const QUEUEPUP: CreatureDef = {
-  top: ' [ ( ) ]',
-  mid: '([{f}·>)',
-  bot: '/([___]\\',
-};
+const QUEUEPUP_FORMS: CreatureDef[] = [
+  // 0 Queuepup — queue penguin
+  { top: ' [ ( ) ]', mid: '([{f}·>)', bot: '/([___]\\' },
+  // 1 Queuefang — bigger queue, fangs
+  { top: '[ [( )] ]', mid: '([ {f}·>)', bot: '/([_W_]\\' },
+  // 2 Queuestrike — battle-penguin, striking
+  { top: '★[ [( )] ]★', mid: '([§ {f}·>)§', bot: '/([_VWV_]\\' },
+];
 
-// refactix — refactor fox  (↺ cycle symbol ears)
-export const REFACTIX: CreatureDef = {
-  top: '↺\\   /↺',
-  mid: '( {f} )',
-  bot: ' ~↺~~↺ ',
-};
+const REFACTIX_FORMS: CreatureDef[] = [
+  // 0 Refactix — refactor fox
+  { top: '↺\\   /↺', mid: '( {f} )', bot: ' ~↺~~↺ ' },
+  // 1 Refaktor — bigger fox, cycle aura
+  { top: '↺\\↺ ↺/↺', mid: '(( {f} ))', bot: ' ~↺W↺~ ' },
+  // 2 Refakthorn — horned refactor-beast
+  { top: '§↺\\↺ ↺/↺§', mid: '((§ {f} §))', bot: ' ~↺WvW↺~ ' },
+];
 
-// lintlet — lint mushroom  (! warning spores on cap)
-export const LINTLET: CreatureDef = {
-  top: '.!-!!-!.',
-  mid: '( {f}  )',
-  bot: '  | !  ',
-};
+const LINTLET_FORMS: CreatureDef[] = [
+  // 0 Lintlet — lint mushroom
+  { top: '.!-!!-!.', mid: '( {f}  )', bot: '  | !  ' },
+  // 1 Linthorn — warning cap + horn
+  { top: '.!-!§!-!.', mid: '(( {f} ))', bot: '  \\!|!/  ' },
+  // 2 Lintveil — vast warning-spore beast
+  { top: '≋.!-!§!-!.≋', mid: '((§ {f} §))', bot: ' \\!|VV|!/ ' },
+];
 
-// depseed — dep seed mushroom  (* node dots on cap)
-export const DEPSEED: CreatureDef = {
-  top: '.*·**·*.',
-  mid: '( {f}  )',
-  bot: '  |·|  ',
-};
+const DEPSEED_FORMS: CreatureDef[] = [
+  // 0 Depseed — dep seed mushroom
+  { top: '.*·**·*.', mid: '( {f}  )', bot: '  |·|  ' },
+  // 1 Depvine — sprouting vines
+  { top: '.*·**·*·*.', mid: '(( {f} ))', bot: ' \\|·|·|/ ' },
+  // 2 Depforest — towering dep-tree, canopy
+  { top: '★*·**·**·*★', mid: '((§ {f} §))', bot: ' \\|·|·|·|/ ' },
+];
 
-// ── Rare (10) ────────────────────────────────────────────────────────────────
+// ── Rare (10) — 2 stages each ────────────────────────────────────────────────
 
-// asyncwing — async dragon  (~ wave wings)
-export const ASYNCWING: CreatureDef = {
-  top: '~^\\  /^~',
-  mid: '<( {f} )>',
-  bot: ' ~vVVv~ ',
-};
+const ASYNCWING_FORMS: CreatureDef[] = [
+  // 0 Asyncwing — async dragon
+  { top: '~^\\  /^~', mid: '<( {f} )>', bot: ' ~vVVv~ ' },
+  // 1 Asyncrend — jagged torn wings, fierce
+  { top: '≋~^\\≋ ≋/^~≋', mid: '<<§( {f} )§>>', bot: ' ~vVWVv~ ' },
+];
 
-// kernfox — kernel fox  ([] bracket ears)
-export const KERNFOX: CreatureDef = {
-  top: '[\\   /]',
-  mid: '( {f} )',
-  bot: ' ~[~]~ ',
-};
+const KERNFOX_FORMS: CreatureDef[] = [
+  // 0 Kernfox — kernel fox
+  { top: '[\\   /]', mid: '( {f} )', bot: ' ~[~]~ ' },
+  // 1 Kernveil — ethereal kernel-fox, veil tails
+  { top: '≋[\\§ §/]≋', mid: '((§ {f} §))', bot: ' ~[≋W≋]~ ' },
+];
 
-// proxlet — proxy ghost  (-> arrows flowing through)
-export const PROXLET: CreatureDef = {
-  top: '.->--<-.',
-  mid: '| {f}  |',
-  bot: " '->->->'",
-};
+const PROXLET_FORMS: CreatureDef[] = [
+  // 0 Proxlet — proxy ghost
+  { top: '.->--<-.', mid: '| {f}  |', bot: " '->->->'" },
+  // 1 Proxhorn — horned proxy-wraith
+  { top: '§.->--<-.§', mid: '|§ {f} §|', bot: " '->-W->-'" },
+];
 
-// cryptkin — crypto ghost  (# cipher marks on body)
-export const CRYPTKIN: CreatureDef = {
-  top: '.#--##-.',
-  mid: '| {f}# |',
-  bot: " '#####'",
-};
+const CRYPTKIN_FORMS: CreatureDef[] = [
+  // 0 Cryptkin — crypto ghost
+  { top: '.#--##-.', mid: '| {f}# |', bot: " '#####'" },
+  // 1 Cryptvast — vast cipher-wraith
+  { top: '≋.#--##-.≋', mid: '|§ {f}# §|', bot: " '#≋##≋#'" },
+];
 
-// dockerpup — docker penguin  ([] container frame)
-export const DOCKERPUP: CreatureDef = {
-  top: ' [( )] ',
-  mid: '([{f}·>)',
-  bot: '/[___]\\',
-};
+const DOCKERPUP_FORMS: CreatureDef[] = [
+  // 0 Dockerpup — docker penguin
+  { top: ' [( )] ', mid: '([{f}·>)', bot: '/[___]\\' },
+  // 1 Dockerstrike — armored container-beast
+  { top: '★[( )( )]★', mid: '([§{f}·>)§', bot: '/[_VWV_]\\' },
+];
 
-// pipeling — pipe snail  (| pipe tubes on shell)
-export const PIPELING: CreatureDef = {
-  top: ' ,|||. ',
-  mid: '\\( {f})',
-  bot: ' ~|·|~ ',
-};
+const PIPELING_FORMS: CreatureDef[] = [
+  // 0 Pipeling — pipe snail
+  { top: ' ,|||. ', mid: '\\( {f})', bot: ' ~|·|~ ' },
+  // 1 Pipehorn — horned pipe-beast
+  { top: '§,|||||.§', mid: '\\\\§( {f} )§', bot: ' ~|·|·|~ ' },
+];
 
-// shellcub — shell bear  ($ prompt on forehead, heavy brow)
-export const SHELLCUB: CreatureDef = {
-  top: '($   $)',
-  mid: '( {f} )',
-  bot: ' ($$$) ',
-};
+const SHELLCUB_FORMS: CreatureDef[] = [
+  // 0 Shellcub — shell bear
+  { top: '($   $)', mid: '( {f} )', bot: ' ($$$) ' },
+  // 1 Shellrend — jagged shell-beast
+  { top: '($≋ ≋$)', mid: '((§ {f} §))', bot: ' ($V$V$) ' },
+];
 
-// regexwing — regex dragon  (.+ pattern on wings)
-export const REGEXWING: CreatureDef = {
-  top: '.+\\  /+.',
-  mid: '<( {f} )>',
-  bot: ' .+VVV+. ',
-};
+const REGEXWING_FORMS: CreatureDef[] = [
+  // 0 Regexwing — regex dragon
+  { top: '.+\\  /+.', mid: '<( {f} )>', bot: ' .+VVV+. ' },
+  // 1 Regexveil — vast pattern-dragon
+  { top: '≋.+\\§ §/+.≋', mid: '<<§( {f} )§>>', bot: ' .+VWVWV+. ' },
+];
 
-// daemonlet — daemon ghost  (∿ infinity loop bottom)
-export const DAEMONLET: CreatureDef = {
-  top: ' .∿∿∿. ',
-  mid: '| {f}  |',
-  bot: " '∿∿∿∿∿'",
-};
+const DAEMONLET_FORMS: CreatureDef[] = [
+  // 0 Daemonlet — daemon ghost
+  { top: ' .∿∿∿. ', mid: '| {f}  |', bot: " '∿∿∿∿∿'" },
+  // 1 Daemonvast — vast daemon-wraith
+  { top: '≋.∿∿∿∿∿.≋', mid: '|§ {f} §|', bot: " '∿∿W∿∿'" },
+];
 
-// heapkin — heap capybara  (^ pyramid stacks on head)
-export const HEAPKIN: CreatureDef = {
-  top: 'n^~~^n ',
-  mid: '( {f} )',
-  bot: '(^_^__)',
-};
+const HEAPKIN_FORMS: CreatureDef[] = [
+  // 0 Heapkin — heap capybara
+  { top: 'n^~~^n ', mid: '( {f} )', bot: '(^_^__)' },
+  // 1 Heaphorn — horned heap-beast, taller stacks
+  { top: 'n^^§^^n ', mid: '((§ {f} §))', bot: '(^_^_^_)' },
+];
 
-// ── Epic (8) ─────────────────────────────────────────────────────────────────
+// ── Epic (8) — 2 stages each ─────────────────────────────────────────────────
 
-// voidpup — void ghost pup  (0 null marks, hollow eyes implied)
-export const VOIDPUP: CreatureDef = {
-  top: '.0---0.',
-  mid: '| {f}0 |',
-  bot: " '0~0~0'",
-};
+const VOIDPUP_FORMS: CreatureDef[] = [
+  // 0 Voidpup — void ghost pup
+  { top: '.0---0.', mid: '| {f}0 |', bot: " '0~0~0'" },
+  // 1 Voidstrike — striking void-hound, fangs + aura
+  { top: '★0---0★', mid: '|§ {f}0 §|', bot: " '0VWV0'" },
+];
 
-// signalfox — signal fox  (~ wave ears and tail)
-export const SIGNALFOX: CreatureDef = {
-  top: '~\\   /~',
-  mid: '( {f} )',
-  bot: ' ≋≋≋≋≋ ',
-};
+const SIGNALFOX_FORMS: CreatureDef[] = [
+  // 0 Signalfox — signal fox
+  { top: '~\\   /~', mid: '( {f} )', bot: ' ≋≋≋≋≋ ' },
+  // 1 Signalveil — ethereal signal-beast, wave veil
+  { top: '≋~\\§ §/~≋', mid: '((§ {f} §))', bot: ' ≋≋W≋W≋ ' },
+];
 
-// kernelith — kernel dragon  (monolith flat-top, imposing)
-export const KERNELITH: CreatureDef = {
-  top: '|=====|',
-  mid: '<[{f}]>',
-  bot: '|=vVv=|',
-};
+const KERNELITH_FORMS: CreatureDef[] = [
+  // 0 Kernelith — kernel dragon
+  { top: '|=====|', mid: '<[{f}]>', bot: '|=vVv=|' },
+  // 1 Kernelord — regal monolith-dragon
+  { top: '★|=====|★', mid: '<<[ {f} ]>>', bot: '|=vVWVv=|' },
+];
 
-// entropix — entropy blob  (~ chaotic squiggles)
-export const ENTROPIX: CreatureDef = {
-  top: '~.~~~.~',
-  mid: '({f}~~)',
-  bot: '`~~∿~~∿`',
-};
+const ENTROPIX_FORMS: CreatureDef[] = [
+  // 0 Entropix — entropy blob
+  { top: '~.~~~.~', mid: '({f}~~)', bot: '`~~∿~~∿`' },
+  // 1 Entrophorn — horned chaos-beast
+  { top: '§~.~∿~.~§', mid: '(§{f}~~§)', bot: '`~∿~W~∿~`' },
+];
 
-// spectrex — spectre axolotl  (spectral frills, glowing)
-export const SPECTREX: CreatureDef = {
-  top: '}°(---)°{',
-  mid: '}°({f})°{',
-  bot: '(_/ \\_ )',
-};
+const SPECTREX_FORMS: CreatureDef[] = [
+  // 0 Spectrex — spectre axolotl
+  { top: '}°(---)°{', mid: '}°({f})°{', bot: '(_/ \\_ )' },
+  // 1 Spectrhorn — horned spectral axolotl
+  { top: '}°§(---)§°{', mid: '}°(§{f}§)°{', bot: '(_/V\\V_ )' },
+];
 
-// recursix — recursive blob  (nested parentheses)
-export const RECURSIX: CreatureDef = {
-  top: '((.--.))',
-  mid: '(({f} ))',
-  bot: "((`..'  ))",
-};
+const RECURSIX_FORMS: CreatureDef[] = [
+  // 0 Recursix — recursive blob
+  { top: '((.--.))', mid: '(({f} ))', bot: "((`..'  ))" },
+  // 1 Recurshorn — horned recursion-beast
+  { top: '§((.--.))§', mid: '((§{f} §))', bot: "((`.W.'  ))" },
+];
 
-// latenclaw — latency dragon  (!! delay marks, heavy claws)
-export const LATENCLAW: CreatureDef = {
-  top: '!!\\  /!!',
-  mid: '<( {f} )>',
-  bot: ' !vVVv! ',
-};
+const LATENCLAW_FORMS: CreatureDef[] = [
+  // 0 Latenclaw — latency dragon
+  { top: '!!\\  /!!', mid: '<( {f} )>', bot: ' !vVVv! ' },
+  // 1 Latenvast — vast latency-dragon
+  { top: '≋!!\\§ §/!!≋', mid: '<<§( {f} )§>>', bot: ' !vVWVv! ' },
+];
 
-// drifthorn — drift capybara  (horn /\ on head)
-export const DRIFTHORN: CreatureDef = {
-  top: 'n/\\~~n ',
-  mid: '( {f} )',
-  bot: '(/\\o/\\)',
-};
+const DRIFTHORN_FORMS: CreatureDef[] = [
+  // 0 Drifthorn — drift capybara w/ horn
+  { top: 'n/\\~~n ', mid: '( {f} )', bot: '(/\\o/\\)' },
+  // 1 Driftvast — vast drift-beast, twin horns + veil
+  { top: '∿n/\\~/\\n∿', mid: '((§ {f} §))', bot: '(/\\oWo/\\)' },
+];
 
-// ── Legendary (5) ────────────────────────────────────────────────────────────
+// ── Legendary (5) — 4 forms each (0-2 growth, 3 Awakened) ────────────────────
 
-// nullgod — void dragon supreme  (* stars around)
-export const NULLGOD: CreatureDef = {
-  top: '*^\\**/**^*',
-  mid: '<*( {f} )*>',
-  bot: '**-vVVv-**',
-};
+const NULLGOD_FORMS: CreatureDef[] = [
+  // 0 Nullgod
+  { top: '*^\\**/**^*', mid: '<*( {f} )*>', bot: '**-vVVv-**' },
+  // 1 Nullgod — grander
+  { top: '★*^\\**/**^*★', mid: '<*§( {f} )§*>', bot: '**-vVWVv-**' },
+  // 2 Nullgod — towering
+  { top: '★*^\\*✦*/*^*★', mid: '<<*§( {f} )§*>>', bot: '**=vVWVv=**' },
+  // 3 Nullgod Unbound — showpiece, full star aura
+  { top: '✦★*^\\*✦*/*^*★✦', mid: '✧<<*§( {f} )§*>>✧', bot: '★**=vWVWVw=**★' },
+];
 
-// compileris — prime compiler robot  (** double stars, grand frame)
-export const COMPILERIS: CreatureDef = {
-  top: '**[||]**',
-  mid: '*[{f}]*',
-  bot: '**|=|**',
-};
+const COMPILERIS_FORMS: CreatureDef[] = [
+  // 0 Compileris
+  { top: '**[||]**', mid: '*[{f}]*', bot: '**|=|**' },
+  // 1 Compileris — grander
+  { top: '★**[||]**★', mid: '*[ {f} ]*', bot: '**|=|=|**' },
+  // 2 Compileris — towering
+  { top: '★**[|✦|]**★', mid: '*[[ {f} ]]*', bot: '**|=|=|=|**' },
+  // 3 Compileris Prime — showpiece, radiant frame
+  { top: '✦★**[|✦|]**★✦', mid: '✧*[[ {f} ]]*✧', bot: '★**|=|◆|=|**★' },
+];
 
-// voidmere — eternal void ghost  (** ornate star border)
-export const VOIDMERE: CreatureDef = {
-  top: '*.=====.*',
-  mid: '*| {f} |*',
-  bot: "*'~*~*~'*",
-};
+const VOIDMERE_FORMS: CreatureDef[] = [
+  // 0 Voidmere
+  { top: '*.=====.*', mid: '*| {f} |*', bot: "*'~*~*~'*" },
+  // 1 Voidmere — grander
+  { top: '★*.=====.*★', mid: '*|§ {f} §|*', bot: "*'~*W*~'*" },
+  // 2 Voidmere — towering
+  { top: '★*.==✦==.*★', mid: '*|§§ {f} §§|*', bot: "*'~*WVW*~'*" },
+  // 3 Voidmere Eternal — showpiece, eternal star halo
+  { top: '✦★*.==✦==.*★✦', mid: '✧*|§§ {f} §§|*✧', bot: "★*'~*WVW*~'*★" },
+];
 
-// hexathorn — ancient hex dragon  (thorn spikes §)
-export const HEXATHORN: CreatureDef = {
-  top: '§^\\  /^§',
-  mid: '<§{f}§>',
-  bot: '§-vVVv-§',
-};
+const HEXATHORN_FORMS: CreatureDef[] = [
+  // 0 Hexathorn
+  { top: '§^\\  /^§', mid: '<§{f}§>', bot: '§-vVVv-§' },
+  // 1 Hexathorn — grander
+  { top: '★§^\\§ §/^§★', mid: '<<§ {f} §>>', bot: '§-vVWVv-§' },
+  // 2 Hexathorn — towering
+  { top: '★§^\\✦/^§★', mid: '<<§§ {f} §§>>', bot: '§=vVWVv=§' },
+  // 3 Hexathorn Ancient — showpiece, ancient thorn crown
+  { top: '✦★§^\\✦/^§★✦', mid: '✧<<§§ {f} §§>>✧', bot: '★§=vWVWVw=§★' },
+];
 
-// driftmare — risen drift capybara  (crown *** on head)
-export const DRIFTMARE: CreatureDef = {
-  top: '*n~~~n*',
-  mid: '*( {f} )*',
-  bot: '*(★_★)*',
-};
+const DRIFTMARE_FORMS: CreatureDef[] = [
+  // 0 Driftmare
+  { top: '*n~~~n*', mid: '*( {f} )*', bot: '*(★_★)*' },
+  // 1 Driftmare — grander
+  { top: '★*n~∿~n*★', mid: '*(§ {f} §)*', bot: '*(★W★)*' },
+  // 2 Driftmare — towering
+  { top: '★*n~✦~n*★', mid: '*((§ {f} §))*', bot: '*(★VWV★)*' },
+  // 3 Driftmare Risen — showpiece, risen star mane
+  { top: '✦★*n~✦~n*★✦', mid: '✧*((§ {f} §))*✧', bot: '★*(★VWV★)*★' },
+];
 
-// ── default & registry ───────────────────────────────────────────────────────
+// ── default, registry & accessor ─────────────────────────────────────────────
 
-const DEFAULT_CREATURE: CreatureDef = PINGLING;
+const DEFAULT_CREATURE: CreatureDef = { top: ' .---. ', mid: '( {f}  )', bot: " `---'" };
 
-export const CREATURE_BY_ID: Record<string, CreatureDef> = {
+// For each buddy, an array of forms indexed by evolutionStage.
+export const CREATURE_FORMS_BY_ID: Record<string, CreatureDef[]> = {
   // Common (15)
-  nullpup:   NULLPUP,
-  glitchlet: GLITCHLET,
-  loopup:    LOOPUP,
-  byteling:  BYTELING,
-  stackit:   STACKIT,
-  pingling:  PINGLING,
-  tabbit:    TABBIT,
-  scopin:    SCOPIN,
-  craslet:   CRASLET,
-  boolup:    BOOLUP,
-  varlet:    VARLET,
-  loglet:    LOGLET,
-  patchkin:  PATCHKIN,
-  driftin:   DRIFTIN,
-  forklet:   FORKLET,
+  glitchlet: GLITCHLET_FORMS,
+  loopup:    LOOPUP_FORMS,
+  nullpup:   NULLPUP_FORMS,
+  byteling:  BYTELING_FORMS,
+  stackit:   STACKIT_FORMS,
+  pingling:  PINGLING_FORMS,
+  tabbit:    TABBIT_FORMS,
+  scopin:    SCOPIN_FORMS,
+  craslet:   CRASLET_FORMS,
+  boolup:    BOOLUP_FORMS,
+  varlet:    VARLET_FORMS,
+  loglet:    LOGLET_FORMS,
+  patchkin:  PATCHKIN_FORMS,
+  driftin:   DRIFTIN_FORMS,
+  forklet:   FORKLET_FORMS,
 
   // Uncommon (12)
-  hexcub:    HEXCUB,
-  compilot:  COMPILOT,
-  mergekit:  MERGEKIT,
-  cachekin:  CACHEKIN,
-  threadlet: THREADLET,
-  parsekin:  PARSEKIN,
-  buildur:   BUILDUR,
-  hooklet:   HOOKLET,
-  queuepup:  QUEUEPUP,
-  refactix:  REFACTIX,
-  lintlet:   LINTLET,
-  depseed:   DEPSEED,
+  hexcub:    HEXCUB_FORMS,
+  compilot:  COMPILOT_FORMS,
+  mergekit:  MERGEKIT_FORMS,
+  cachekin:  CACHEKIN_FORMS,
+  threadlet: THREADLET_FORMS,
+  parsekin:  PARSEKIN_FORMS,
+  buildur:   BUILDUR_FORMS,
+  hooklet:   HOOKLET_FORMS,
+  queuepup:  QUEUEPUP_FORMS,
+  refactix:  REFACTIX_FORMS,
+  lintlet:   LINTLET_FORMS,
+  depseed:   DEPSEED_FORMS,
 
   // Rare (10)
-  asyncwing: ASYNCWING,
-  kernfox:   KERNFOX,
-  proxlet:   PROXLET,
-  cryptkin:  CRYPTKIN,
-  dockerpup: DOCKERPUP,
-  pipeling:  PIPELING,
-  shellcub:  SHELLCUB,
-  regexwing: REGEXWING,
-  daemonlet: DAEMONLET,
-  heapkin:   HEAPKIN,
+  asyncwing: ASYNCWING_FORMS,
+  kernfox:   KERNFOX_FORMS,
+  proxlet:   PROXLET_FORMS,
+  cryptkin:  CRYPTKIN_FORMS,
+  dockerpup: DOCKERPUP_FORMS,
+  pipeling:  PIPELING_FORMS,
+  shellcub:  SHELLCUB_FORMS,
+  regexwing: REGEXWING_FORMS,
+  daemonlet: DAEMONLET_FORMS,
+  heapkin:   HEAPKIN_FORMS,
 
   // Epic (8)
-  voidpup:   VOIDPUP,
-  signalfox: SIGNALFOX,
-  kernelith: KERNELITH,
-  entropix:  ENTROPIX,
-  spectrex:  SPECTREX,
-  recursix:  RECURSIX,
-  latenclaw: LATENCLAW,
-  drifthorn: DRIFTHORN,
+  voidpup:   VOIDPUP_FORMS,
+  signalfox: SIGNALFOX_FORMS,
+  kernelith: KERNELITH_FORMS,
+  entropix:  ENTROPIX_FORMS,
+  spectrex:  SPECTREX_FORMS,
+  recursix:  RECURSIX_FORMS,
+  latenclaw: LATENCLAW_FORMS,
+  drifthorn: DRIFTHORN_FORMS,
 
   // Legendary (5)
-  nullgod:    NULLGOD,
-  compileris: COMPILERIS,
-  voidmere:   VOIDMERE,
-  hexathorn:  HEXATHORN,
-  driftmare:  DRIFTMARE,
+  nullgod:    NULLGOD_FORMS,
+  compileris: COMPILERIS_FORMS,
+  voidmere:   VOIDMERE_FORMS,
+  hexathorn:  HEXATHORN_FORMS,
+  driftmare:  DRIFTMARE_FORMS,
 };
+
+// Safe accessor: clamps stage to available forms, falls back to a blob.
+export function creatureFor(buddyId: string, stage: number): CreatureDef {
+  const forms = CREATURE_FORMS_BY_ID[buddyId];
+  if (!forms || forms.length === 0) return DEFAULT_CREATURE;
+  const i = Math.max(0, Math.min(stage, forms.length - 1));
+  return forms[i]!;
+}
 
 export { DEFAULT_CREATURE };
